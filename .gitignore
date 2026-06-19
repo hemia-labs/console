@@ -2,3 +2,9 @@ node_modules/
 dist/
 .next/
 .env*.local
+*.lock
+hemia_console_funciones_modulos 2.md
+hemia_id_console_integration.md
+identity_access_development_progress.md
+roadmap_identity_access_hemia_id.md
+.agents/

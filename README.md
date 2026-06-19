@@ -32,6 +32,22 @@ bun run dev:api    # solo backend  (http://localhost:3001)
 bun run build      # build de todas las apps
 ```
 
+## Avance Identity & Access backend
+
+`apps/api` ya incluye la integracion backend de **Hemia Console** con **Hemia ID** como sistema dueno de identidad y acceso. El backend funciona como gateway/admin BFF bajo el modulo `identity-access`.
+
+Estado actual:
+
+- Fase 0-11 terminadas: configuracion Hemia ID, cliente Admin API, modulo `identity-access`, health, tenants, users, organizations, teams, memberships, invitations, roles, permissions, OAuth clients, SSO clients y accounts.
+- Cleanup terminado: tests backend centralizados en `apps/api/test`, con unit en `test/unit` y e2e en `test/e2e`; types/enums del modulo en `src/modules/identity-access/types`.
+- DB/migraciones: no aplica para identidad real; Hemia ID sigue siendo el sistema dueno.
+- Siguiente fase: **Fase 12 - External API M2M opcional**, solo si hay caso de uso claro para eventos, busquedas o integraciones backend-to-backend.
+
+Documentos de seguimiento:
+
+- [Roadmap Identity & Access](roadmap_identity_access_hemia_id.md)
+- [Progreso vivo](identity_access_development_progress.md)
+
 ## Estructura
 
 ```
