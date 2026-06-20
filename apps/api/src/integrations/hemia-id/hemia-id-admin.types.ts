@@ -30,3 +30,12 @@ export interface HemiaIdAdminResponse<T = unknown> {
   body: T;
   setCookie: string[];
 }
+
+export interface HemiaIdAdminMetadata {
+  requestId?: string;
+}
+
+export interface HemiaIdAdminResponseWithMetadata<T = unknown> {
+  body: T;
+  metadata: HemiaIdAdminMetadata;
+}

@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { HemiaIdModule } from '../../integrations/hemia-id/hemia-id.module';
 import { AccountsController } from './accounts.controller';
 import { AccountsService } from './accounts.service';
+import { ExternalIdentityAccessController } from './external-identity-access.controller';
+import { ExternalIdentityAccessService } from './external-identity-access.service';
 import { IdentityAccessController } from './identity-access.controller';
 import { IdentityAccessService } from './identity-access.service';
 import { InvitationsController } from './invitations.controller';
@@ -40,6 +42,7 @@ import { UsersService } from './users.service';
     OAuthClientsController,
     SsoClientsController,
     AccountsController,
+    ExternalIdentityAccessController,
   ],
   providers: [
     IdentityAccessService,
@@ -54,6 +57,7 @@ import { UsersService } from './users.service';
     OAuthClientsService,
     SsoClientsService,
     AccountsService,
+    ExternalIdentityAccessService,
   ],
 })
 export class IdentityAccessModule {}

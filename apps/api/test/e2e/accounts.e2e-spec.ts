@@ -7,7 +7,7 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from '../../src/app.module';
+import { createIdentityAccessE2eTestingModule } from './utils/create-identity-access-e2e-testing-module';
 import { HemiaIdAdminClient } from '../../src/integrations/hemia-id/hemia-id-admin.client';
 
 describe('AccountsController (e2e)', () => {
@@ -34,9 +34,7 @@ describe('AccountsController (e2e)', () => {
       }),
     };
 
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    })
+    const moduleFixture: TestingModule = await createIdentityAccessE2eTestingModule()
       .overrideProvider(HemiaIdAdminClient)
       .useValue(hemiaIdAdminClient)
       .compile();

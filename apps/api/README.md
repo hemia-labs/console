@@ -1,7 +1,7 @@
 # API (NestJS)
 
 Backend del monorepo `nextjs-nestjs`. Plantilla NestJS + TypeORM + PostgreSQL.
-La base de datos viene **desactivada** hasta que la configures (ver abajo).
+La base de datos esta **activa** para auditoria local de Console API.
 
 ## Stack
 
@@ -20,7 +20,7 @@ apps/api/
   data-source.ts                 # DataSource para el CLI de migraciones
   src/
     main.ts                      # bootstrap: ValidationPipe global + CORS, escucha PORT (3001)
-    app.module.ts                # módulo raíz (DatabaseModule comentado hasta tener DB)
+    app.module.ts                # módulo raíz (ConfigModule + DatabaseModule + features)
     config/
       database.config.ts         # config namespaced 'database' (registerAs)
     database/
@@ -50,13 +50,8 @@ bun install
 bun run --cwd apps/api start:dev   # watch mode
 ```
 
-Sin DB el servidor levanta igual (responde en `/`). El módulo de datos está apagado.
-
-## Activar la base de datos
-
-1. Completa `.env`.
-2. En `src/app.module.ts` descomenta el import de `DatabaseModule` cuando exista un módulo con entidades.
-3. Genera y corre la migración correspondiente:
+El servidor requiere PostgreSQL configurado. Para auditoria local, genera y corre la migracion
+correspondiente antes de usar endpoints que dependan de DB:
 
 ```bash
 bun run --cwd apps/api migration:generate src/database/migrations/<Nombre>
@@ -76,6 +71,10 @@ bun run --cwd apps/api migration:revert
 ## Tests y build
 
 ```bash
-bun run --cwd apps/api test
 bun run --cwd apps/api build
+bun run --cwd apps/api test
+bun run --cwd apps/api test:e2e
 ```
+
+`test:e2e` usa Hemia ID y auditoria mockeados; no requiere PostgreSQL. `build` y runtime si validan
+`DB_*` porque la auditoria local esta activa.

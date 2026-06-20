@@ -5,13 +5,16 @@ import {
   HttpException,
   Injectable,
   NotFoundException,
+  Optional,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AuditRequestContext } from '../../common/audit/audit-request-context';
 import {
   HemiaIdAdminRequestOptions,
   HemiaIdAdminResponse,
+  HemiaIdAdminResponseWithMetadata,
 } from './hemia-id-admin.types';
 
 const SENSITIVE_KEYS = [
@@ -19,17 +22,32 @@ const SENSITIVE_KEYS = [
   'cookie',
   'clientsecret',
   'client_secret',
+  'password',
   'access_token',
   'refresh_token',
 ];
 
 @Injectable()
 export class HemiaIdAdminClient {
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    @Optional() private readonly auditRequestContext?: AuditRequestContext,
+  ) {}
 
   async request<T>(options: HemiaIdAdminRequestOptions): Promise<T> {
     const response = await this.executeRequest(options);
     return (await this.parseResponse(response)) as T;
+  }
+
+  async requestWithMetadata<T>(
+    options: HemiaIdAdminRequestOptions,
+  ): Promise<HemiaIdAdminResponseWithMetadata<T>> {
+    const response = await this.executeRequest(options);
+
+    return {
+      body: (await this.parseResponse(response)) as T,
+      metadata: this.extractMetadata(response),
+    };
   }
 
   async requestWithHeaders<T>(
@@ -61,9 +79,11 @@ export class HemiaIdAdminClient {
       });
 
       if (!response.ok) {
+        this.recordUpstreamCall(options, response);
         throw await this.toHttpException(response);
       }
 
+      this.recordUpstreamCall(options, response);
       return response;
     } catch (error) {
       if (error instanceof HttpException) {
@@ -165,6 +185,27 @@ export class HemiaIdAdminClient {
 
     const setCookie = response.headers.get('set-cookie');
     return setCookie ? [setCookie] : [];
+  }
+
+  private extractMetadata(response: Response) {
+    return {
+      requestId:
+        response.headers.get('x-request-id') ??
+        response.headers.get('x-correlation-id') ??
+        undefined,
+    };
+  }
+
+  private recordUpstreamCall(
+    options: HemiaIdAdminRequestOptions,
+    response: Response,
+  ): void {
+    this.auditRequestContext?.addUpstreamCall({
+      source: 'admin',
+      method: options.method,
+      path: options.path,
+      requestId: this.extractMetadata(response).requestId,
+    });
   }
 
   private async toHttpException(response: Response): Promise<HttpException> {

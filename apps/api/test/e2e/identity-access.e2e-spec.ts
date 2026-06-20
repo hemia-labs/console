@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from '../../src/app.module';
+import { createIdentityAccessE2eTestingModule } from './utils/create-identity-access-e2e-testing-module';
 import { HemiaIdAdminClient } from '../../src/integrations/hemia-id/hemia-id-admin.client';
 
 describe('IdentityAccessController (e2e)', () => {
@@ -17,9 +17,7 @@ describe('IdentityAccessController (e2e)', () => {
         .mockResolvedValueOnce({ database: 'ok' }),
     };
 
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    })
+    const moduleFixture: TestingModule = await createIdentityAccessE2eTestingModule()
       .overrideProvider(HemiaIdAdminClient)
       .useValue(hemiaIdAdminClient)
       .compile();

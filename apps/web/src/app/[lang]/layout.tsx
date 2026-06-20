@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import "../globals.css";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppTopbar } from "@/components/app-topbar";
+import { isLocale, locales } from "@/i18n/config";
+
+export function generateStaticParams() {
+  return locales.map((lang) => ({ lang }));
+}
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,24 +21,29 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Nextjs Template",
-  description: "Workspace de documentación B2B",
+  title: "Hemia Console",
+  description: "Consola operativa para administracion Hemia",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
+  params,
 }: Readonly<{
   children: React.ReactNode;
+  params: Promise<{ lang: string }>;
 }>) {
+  const { lang } = await params;
+  if (!isLocale(lang)) notFound();
+
   return (
     <html
-      lang="es"
+      lang={lang}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full">
-        <AppSidebar />
+      <body className="flex min-h-full bg-background">
+        <AppSidebar locale={lang} />
         <div className="flex min-w-0 flex-1 flex-col">
-          <AppTopbar />
+          <AppTopbar locale={lang} />
           <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
         </div>
       </body>

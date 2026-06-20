@@ -143,6 +143,24 @@ describe('HemiaIdAdminClient', () => {
     });
   });
 
+  it('returns response metadata when requested', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ ok: true }, 200, {
+        'x-request-id': 'admin-request-id',
+      }),
+    );
+
+    await expect(
+      client.requestWithMetadata({
+        method: 'GET',
+        path: 'health',
+      }),
+    ).resolves.toEqual({
+      body: { ok: true },
+      metadata: { requestId: 'admin-request-id' },
+    });
+  });
+
   it.each([
     [400, BadRequestException],
     [422, BadRequestException],
@@ -175,6 +193,24 @@ describe('HemiaIdAdminClient', () => {
           cookie: 'access_token=secret-cookie',
         },
       }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({
+        message: 'Hemia ID Admin API request failed',
+      }),
+    });
+  });
+
+  it.each([
+    'authorization leaked',
+    'cookie leaked',
+    'access_token leaked',
+    'refresh_token leaked',
+    'client_secret leaked',
+  ])('redacts sensitive error message %s', async (message) => {
+    fetchMock.mockResolvedValue(jsonResponse({ message }, 400));
+
+    await expect(
+      client.request({ method: 'GET', path: 'health' }),
     ).rejects.toMatchObject({
       response: expect.objectContaining({
         message: 'Hemia ID Admin API request failed',

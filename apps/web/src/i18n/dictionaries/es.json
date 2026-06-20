@@ -1,0 +1,18 @@
+{
+  "home": {
+    "consoleApi": "Console API",
+    "ready": "Lista",
+    "identityAccess": "Identity & Access",
+    "users": "Usuarios",
+    "accounts": "Cuentas",
+    "pending": "Pendiente",
+    "sectionTitle": "Operaciones iniciales",
+    "sectionDescription": "Shell listo para conectar datos reales de Console API en la siguiente fase.",
+    "quickLinks": {
+      "users": "Usuarios",
+      "invitations": "Invitaciones",
+      "tenants": "Tenants",
+      "oauthClients": "OAuth clients"
+    }
+  }
+}

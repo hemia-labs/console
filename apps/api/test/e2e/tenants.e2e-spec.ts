@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from '../../src/app.module';
+import { createIdentityAccessE2eTestingModule } from './utils/create-identity-access-e2e-testing-module';
 import { HemiaIdAdminClient } from '../../src/integrations/hemia-id/hemia-id-admin.client';
 
 describe('TenantsController (e2e)', () => {
@@ -21,9 +21,7 @@ describe('TenantsController (e2e)', () => {
       request: jest.fn().mockResolvedValue({ id: tenantId, name: 'Acme' }),
     };
 
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    })
+    const moduleFixture: TestingModule = await createIdentityAccessE2eTestingModule()
       .overrideProvider(HemiaIdAdminClient)
       .useValue(hemiaIdAdminClient)
       .compile();
