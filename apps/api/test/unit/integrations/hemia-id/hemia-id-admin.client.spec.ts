@@ -64,6 +64,7 @@ describe('HemiaIdAdminClient', () => {
       auth: {
         authorization: 'Bearer secret-token',
         cookie: 'access_token=secret-cookie',
+        tenantId: 'tenant-id',
       },
     });
 
@@ -74,6 +75,7 @@ describe('HemiaIdAdminClient', () => {
           Accept: 'application/json',
           Authorization: 'Bearer secret-token',
           Cookie: 'access_token=secret-cookie',
+          'X-Tenant-Id': 'tenant-id',
         },
       }),
     );

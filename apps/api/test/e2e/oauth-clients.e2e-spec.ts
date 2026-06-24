@@ -214,6 +214,73 @@ describe('OAuthClientsController (e2e)', () => {
   });
 
   it.each([
+    [
+      'redirect-uris',
+      'https://console.hemia.cloud/callback',
+    ],
+    ['scopes', 'openid'],
+    ['grant-types', 'authorization_code'],
+    ['response-types', 'code'],
+  ])('POST /identity-access/oauth-clients/:id/%s proxies value body', async (listPath, value) => {
+    await request(app.getHttpServer())
+      .post(`/identity-access/oauth-clients/${oauthClientId}/${listPath}`)
+      .set('Authorization', auth.authorization)
+      .set('Cookie', auth.cookie)
+      .send({ value, clientSecret: 'must-not-forward' })
+      .expect(201)
+      .expect({ id: oauthClientId });
+
+    expect(hemiaIdAdminClient.request).toHaveBeenLastCalledWith({
+      method: 'POST',
+      path: `/oauth-clients/${oauthClientId}/${listPath}`,
+      body: { value },
+      auth,
+    });
+  });
+
+  it.each([
+    [
+      'redirect-uris',
+      'https://console.hemia.cloud/callback',
+    ],
+    ['scopes', 'openid'],
+    ['grant-types', 'authorization_code'],
+    ['response-types', 'code'],
+  ])('DELETE /identity-access/oauth-clients/:id/%s proxies value body', async (listPath, value) => {
+    await request(app.getHttpServer())
+      .delete(`/identity-access/oauth-clients/${oauthClientId}/${listPath}`)
+      .set('Authorization', auth.authorization)
+      .set('Cookie', auth.cookie)
+      .send({ value, clientSecret: 'must-not-forward' })
+      .expect(200)
+      .expect({ id: oauthClientId });
+
+    expect(hemiaIdAdminClient.request).toHaveBeenLastCalledWith({
+      method: 'DELETE',
+      path: `/oauth-clients/${oauthClientId}/${listPath}`,
+      body: { value },
+      auth,
+    });
+  });
+
+  it('validates OAuth client list action params and body', async () => {
+    await request(app.getHttpServer())
+      .post(`/identity-access/oauth-clients/${oauthClientId}/redirect-uris`)
+      .send({ value: 'not-a-url' })
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .post(`/identity-access/oauth-clients/${oauthClientId}/scopes`)
+      .send({ value: '' })
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .post('/identity-access/oauth-clients/not-a-uuid/scopes')
+      .send({ value: 'openid' })
+      .expect(400);
+  });
+
+  it.each([
     [new UnauthorizedException('Missing auth'), 401],
     [new ForbiddenException('Forbidden'), 403],
   ])('returns Hemia ID auth error %p', async (exception, statusCode) => {

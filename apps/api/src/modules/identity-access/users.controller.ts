@@ -7,89 +7,88 @@ import {
   Patch,
   Post,
   Query,
-  Req,
+  UseGuards,
 } from '@nestjs/common';
-import type { Request } from 'express';
+import {
+  CurrentUser,
+  SsoAuthGuard,
+  type CurrentUserPayload,
+} from '@hemia/auth/nestjs';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { ListUsersQueryDto } from './dtos/list-users-query.dto';
 import { UpdateUserStatusDto } from './dtos/update-user-status.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { UserParamDto } from './dtos/user-param.dto';
 import { UsersService } from './users.service';
-import { extractHemiaIdAuth } from './utils/extract-hemia-id-auth.util';
 
+@UseGuards(SsoAuthGuard)
 @Controller('identity-access/users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  findAll(
+  async findAll(
     @Query() query: ListUsersQueryDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.usersService.findAll(query, extractHemiaIdAuth(request));
+    return this.usersService.findAll(query, currentUser);
   }
 
   @Post()
-  create(@Body() dto: CreateUserDto, @Req() request: Request): Promise<unknown> {
-    return this.usersService.create(dto, extractHemiaIdAuth(request));
+  async create(
+    @Body() dto: CreateUserDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ): Promise<unknown> {
+    return this.usersService.create(dto, currentUser);
   }
 
   @Get(':id')
-  findOne(
+  async findOne(
     @Param() params: UserParamDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.usersService.findOne(params.id, extractHemiaIdAuth(request));
+    return this.usersService.findOne(params.id, currentUser);
   }
 
   @Patch(':id/status')
-  updateStatus(
+  async updateStatus(
     @Param() params: UserParamDto,
     @Body() dto: UpdateUserStatusDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.usersService.updateStatus(
-      params.id,
-      dto,
-      extractHemiaIdAuth(request),
-    );
+    return this.usersService.updateStatus(params.id, dto, currentUser);
   }
 
   @Patch(':id/lock')
-  lock(
+  async lock(
     @Param() params: UserParamDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.usersService.lock(params.id, extractHemiaIdAuth(request));
+    return this.usersService.lock(params.id, currentUser);
   }
 
   @Patch(':id/unlock')
-  unlock(
+  async unlock(
     @Param() params: UserParamDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.usersService.unlock(params.id, extractHemiaIdAuth(request));
+    return this.usersService.unlock(params.id, currentUser);
   }
 
   @Patch(':id')
-  update(
+  async update(
     @Param() params: UserParamDto,
     @Body() dto: UpdateUserDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.usersService.update(
-      params.id,
-      dto,
-      extractHemiaIdAuth(request),
-    );
+    return this.usersService.update(params.id, dto, currentUser);
   }
 
   @Delete(':id')
-  remove(
+  async remove(
     @Param() params: UserParamDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.usersService.remove(params.id, extractHemiaIdAuth(request));
+    return this.usersService.remove(params.id, currentUser);
   }
 }

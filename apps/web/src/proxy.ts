@@ -3,7 +3,7 @@ import { defaultLocale, isLocale, locales } from "@/i18n/config";
 
 const LOCALE_COOKIE = "NEXT_LOCALE";
 const SESSION_COOKIE = "hemia_session"; // set by Console API /auth/callback (sso.config.ts)
-const DEFAULT_BACKEND_URL = "http://localhost:3001";
+const DEFAULT_BACKEND_URL = "http://localhost:3016";
 
 // ponytail: naive Accept-Language parse + cookie preference; swap for negotiator/intl-localematcher if q-value ranking matters.
 function pickLocale(req: NextRequest) {

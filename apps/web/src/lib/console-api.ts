@@ -4,7 +4,7 @@ import {
   type ConsoleApiRequestOptions,
 } from "@/lib/console-api.types";
 
-const DEFAULT_CONSOLE_API_BASE_URL = "http://localhost:3001";
+const DEFAULT_CONSOLE_API_BASE_URL = "http://localhost:3016";
 
 function getConsoleApiBaseUrl() {
   return (
@@ -138,8 +138,8 @@ async function request<T>(
 }
 
 export const consoleApi = {
-  delete<T>(path: string, options?: ConsoleApiRequestOptions) {
-    return request<T>("DELETE", path, undefined, options);
+  delete<T>(path: string, body?: unknown, options?: ConsoleApiRequestOptions) {
+    return request<T>("DELETE", path, body, options);
   },
   get<T>(path: string, options?: ConsoleApiRequestOptions) {
     return request<T>("GET", path, undefined, options);

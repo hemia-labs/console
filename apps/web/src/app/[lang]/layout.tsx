@@ -4,6 +4,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppTopbar } from "@/components/app-topbar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { isLocale, locales } from "@/i18n/config";
 
 export function generateStaticParams() {
@@ -40,12 +42,23 @@ export default async function RootLayout({
       lang={lang}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full bg-background">
-        <AppSidebar locale={lang} />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <AppTopbar locale={lang} />
-          <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
-        </div>
+      <body className="min-h-full bg-background">
+        <TooltipProvider>
+          <SidebarProvider
+            style={
+              {
+                "--sidebar-width": "var(--layout-sidebar-width)",
+                "--sidebar-width-icon": "var(--layout-sidebar-collapsed-width)",
+              } as React.CSSProperties
+            }
+          >
+            <AppSidebar locale={lang} />
+            <SidebarInset>
+              <AppTopbar locale={lang} />
+              <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+            </SidebarInset>
+          </SidebarProvider>
+        </TooltipProvider>
       </body>
     </html>
   );

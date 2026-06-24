@@ -105,6 +105,38 @@ describe('OAuthClientsService', () => {
     });
   });
 
+  it.each([
+    ['redirect-uris' as const, 'https://console.hemia.cloud/callback'],
+    ['scopes' as const, 'openid'],
+    ['grant-types' as const, 'authorization_code'],
+    ['response-types' as const, 'code'],
+  ])('adds OAuth client %s value', async (listPath, value) => {
+    await service.addListValue('client-id', listPath, { value }, auth);
+
+    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+      method: 'POST',
+      path: `/oauth-clients/client-id/${listPath}`,
+      body: { value },
+      auth,
+    });
+  });
+
+  it.each([
+    ['redirect-uris' as const, 'https://console.hemia.cloud/callback'],
+    ['scopes' as const, 'openid'],
+    ['grant-types' as const, 'authorization_code'],
+    ['response-types' as const, 'code'],
+  ])('removes OAuth client %s value', async (listPath, value) => {
+    await service.removeListValue('client-id', listPath, { value }, auth);
+
+    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+      method: 'DELETE',
+      path: `/oauth-clients/client-id/${listPath}`,
+      body: { value },
+      auth,
+    });
+  });
+
   it('removes an OAuth client', async () => {
     await service.remove('client-id', auth);
 

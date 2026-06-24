@@ -6,75 +6,184 @@ import {
   Param,
   Patch,
   Post,
-  Req,
+  UseGuards,
 } from '@nestjs/common';
-import type { Request } from 'express';
+import {
+  CurrentUser,
+  SsoAuthGuard,
+  type CurrentUserPayload,
+} from '@hemia/auth/nestjs';
 import { CreateOAuthClientDto } from './dtos/create-oauth-client.dto';
+import {
+  OAuthClientListValueDto,
+  OAuthClientRedirectUriValueDto,
+} from './dtos/oauth-client-list-value.dto';
 import { OAuthClientParamDto } from './dtos/oauth-client-param.dto';
 import { UpdateOAuthClientDto } from './dtos/update-oauth-client.dto';
 import { OAuthClientsService } from './oauth-clients.service';
-import { extractHemiaIdAuth } from './utils/extract-hemia-id-auth.util';
 
+@UseGuards(SsoAuthGuard)
 @Controller('identity-access/oauth-clients')
 export class OAuthClientsController {
   constructor(private readonly oauthClientsService: OAuthClientsService) {}
 
   @Get()
-  findAll(@Req() request: Request): Promise<unknown> {
-    return this.oauthClientsService.findAll(extractHemiaIdAuth(request));
+  async findAll(
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ): Promise<unknown> {
+    return this.oauthClientsService.findAll(currentUser);
   }
 
   @Post()
-  create(
+  async create(
     @Body() dto: CreateOAuthClientDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.oauthClientsService.create(dto, extractHemiaIdAuth(request));
+    return this.oauthClientsService.create(dto, currentUser);
   }
 
   @Post(':id/rotate-secret')
-  rotateSecret(
+  async rotateSecret(
     @Param() params: OAuthClientParamDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.oauthClientsService.rotateSecret(
+    return this.oauthClientsService.rotateSecret(params.id, currentUser);
+  }
+
+  @Post(':id/redirect-uris')
+  async addRedirectUri(
+    @Param() params: OAuthClientParamDto,
+    @Body() dto: OAuthClientRedirectUriValueDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ): Promise<unknown> {
+    return this.oauthClientsService.addListValue(
       params.id,
-      extractHemiaIdAuth(request),
+      'redirect-uris',
+      dto,
+      currentUser,
+    );
+  }
+
+  @Delete(':id/redirect-uris')
+  async removeRedirectUri(
+    @Param() params: OAuthClientParamDto,
+    @Body() dto: OAuthClientRedirectUriValueDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ): Promise<unknown> {
+    return this.oauthClientsService.removeListValue(
+      params.id,
+      'redirect-uris',
+      dto,
+      currentUser,
+    );
+  }
+
+  @Post(':id/scopes')
+  async addScope(
+    @Param() params: OAuthClientParamDto,
+    @Body() dto: OAuthClientListValueDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ): Promise<unknown> {
+    return this.oauthClientsService.addListValue(
+      params.id,
+      'scopes',
+      dto,
+      currentUser,
+    );
+  }
+
+  @Delete(':id/scopes')
+  async removeScope(
+    @Param() params: OAuthClientParamDto,
+    @Body() dto: OAuthClientListValueDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ): Promise<unknown> {
+    return this.oauthClientsService.removeListValue(
+      params.id,
+      'scopes',
+      dto,
+      currentUser,
+    );
+  }
+
+  @Post(':id/grant-types')
+  async addGrantType(
+    @Param() params: OAuthClientParamDto,
+    @Body() dto: OAuthClientListValueDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ): Promise<unknown> {
+    return this.oauthClientsService.addListValue(
+      params.id,
+      'grant-types',
+      dto,
+      currentUser,
+    );
+  }
+
+  @Delete(':id/grant-types')
+  async removeGrantType(
+    @Param() params: OAuthClientParamDto,
+    @Body() dto: OAuthClientListValueDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ): Promise<unknown> {
+    return this.oauthClientsService.removeListValue(
+      params.id,
+      'grant-types',
+      dto,
+      currentUser,
+    );
+  }
+
+  @Post(':id/response-types')
+  async addResponseType(
+    @Param() params: OAuthClientParamDto,
+    @Body() dto: OAuthClientListValueDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ): Promise<unknown> {
+    return this.oauthClientsService.addListValue(
+      params.id,
+      'response-types',
+      dto,
+      currentUser,
+    );
+  }
+
+  @Delete(':id/response-types')
+  async removeResponseType(
+    @Param() params: OAuthClientParamDto,
+    @Body() dto: OAuthClientListValueDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ): Promise<unknown> {
+    return this.oauthClientsService.removeListValue(
+      params.id,
+      'response-types',
+      dto,
+      currentUser,
     );
   }
 
   @Get(':id')
-  findOne(
+  async findOne(
     @Param() params: OAuthClientParamDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.oauthClientsService.findOne(
-      params.id,
-      extractHemiaIdAuth(request),
-    );
+    return this.oauthClientsService.findOne(params.id, currentUser);
   }
 
   @Patch(':id')
-  update(
+  async update(
     @Param() params: OAuthClientParamDto,
     @Body() dto: UpdateOAuthClientDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.oauthClientsService.update(
-      params.id,
-      dto,
-      extractHemiaIdAuth(request),
-    );
+    return this.oauthClientsService.update(params.id, dto, currentUser);
   }
 
   @Delete(':id')
-  remove(
+  async remove(
     @Param() params: OAuthClientParamDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.oauthClientsService.remove(
-      params.id,
-      extractHemiaIdAuth(request),
-    );
+    return this.oauthClientsService.remove(params.id, currentUser);
   }
 }

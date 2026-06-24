@@ -5,39 +5,45 @@ import {
   Get,
   Param,
   Post,
-  Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
-import type { Request, Response } from 'express';
+import {
+  CurrentUser,
+  SsoAuthGuard,
+  type CurrentUserPayload,
+} from '@hemia/auth/nestjs';
+import type { Response } from 'express';
 import { AccountsService } from './accounts.service';
 import { AccountIndexParamDto } from './dtos/account-index-param.dto';
 import { SwitchAccountDto } from './dtos/switch-account.dto';
-import { extractHemiaIdAuth } from './utils/extract-hemia-id-auth.util';
 
+@UseGuards(SsoAuthGuard)
 @Controller('identity-access/accounts')
 export class AccountsController {
   constructor(private readonly accountsService: AccountsService) {}
 
   @Get()
-  findAll(@Req() request: Request): Promise<unknown> {
-    return this.accountsService.findAll(extractHemiaIdAuth(request));
+  async findAll(
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ): Promise<unknown> {
+    return this.accountsService.findAll(currentUser);
   }
 
   @Get('active')
-  findActive(@Req() request: Request): Promise<unknown> {
-    return this.accountsService.findActive(extractHemiaIdAuth(request));
+  async findActive(
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ): Promise<unknown> {
+    return this.accountsService.findActive(currentUser);
   }
 
   @Post('switch')
   async switch(
     @Body() dto: SwitchAccountDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
     @Res({ passthrough: true }) response: Response,
   ): Promise<unknown> {
-    const result = await this.accountsService.switch(
-      dto,
-      extractHemiaIdAuth(request),
-    );
+    const result = await this.accountsService.switch(dto, currentUser);
 
     for (const cookie of result.setCookie) {
       response.append('Set-Cookie', cookie);
@@ -47,13 +53,10 @@ export class AccountsController {
   }
 
   @Delete(':accountIndex')
-  remove(
+  async remove(
     @Param() params: AccountIndexParamDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.accountsService.remove(
-      params.accountIndex,
-      extractHemiaIdAuth(request),
-    );
+    return this.accountsService.remove(params.accountIndex, currentUser);
   }
 }

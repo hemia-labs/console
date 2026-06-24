@@ -131,6 +131,10 @@ export class HemiaIdAdminClient {
       headers.Cookie = options.auth.cookie;
     }
 
+    if (options.auth?.tenantId) {
+      headers['X-Tenant-Id'] = options.auth.tenantId;
+    }
+
     if (this.shouldSendBody(options)) {
       headers['Content-Type'] = 'application/json';
     }

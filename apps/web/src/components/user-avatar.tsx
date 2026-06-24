@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
-const DEFAULT_CONSOLE_API_BASE_URL = "http://localhost:3001";
+const DEFAULT_CONSOLE_API_BASE_URL = "http://localhost:3016";
 
 type SessionUser = {
   email?: string;

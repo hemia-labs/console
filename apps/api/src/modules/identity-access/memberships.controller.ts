@@ -7,57 +7,54 @@ import {
   Patch,
   Post,
   Query,
-  Req,
+  UseGuards,
 } from '@nestjs/common';
-import type { Request } from 'express';
+import {
+  CurrentUser,
+  SsoAuthGuard,
+  type CurrentUserPayload,
+} from '@hemia/auth/nestjs';
 import { CreateMembershipDto } from './dtos/create-membership.dto';
 import { ListMembershipsQueryDto } from './dtos/list-memberships-query.dto';
 import { MembershipParamDto } from './dtos/membership-param.dto';
 import { UpdateMembershipStatusDto } from './dtos/update-membership-status.dto';
 import { MembershipsService } from './memberships.service';
-import { extractHemiaIdAuth } from './utils/extract-hemia-id-auth.util';
 
+@UseGuards(SsoAuthGuard)
 @Controller('identity-access/memberships')
 export class MembershipsController {
   constructor(private readonly membershipsService: MembershipsService) {}
 
   @Get()
-  findAll(
+  async findAll(
     @Query() query: ListMembershipsQueryDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.membershipsService.findAll(query, extractHemiaIdAuth(request));
+    return this.membershipsService.findAll(query, currentUser);
   }
 
   @Post()
-  create(
+  async create(
     @Body() dto: CreateMembershipDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.membershipsService.create(dto, extractHemiaIdAuth(request));
+    return this.membershipsService.create(dto, currentUser);
   }
 
   @Patch(':id/status')
-  updateStatus(
+  async updateStatus(
     @Param() params: MembershipParamDto,
     @Body() dto: UpdateMembershipStatusDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.membershipsService.updateStatus(
-      params.id,
-      dto,
-      extractHemiaIdAuth(request),
-    );
+    return this.membershipsService.updateStatus(params.id, dto, currentUser);
   }
 
   @Delete(':id')
-  remove(
+  async remove(
     @Param() params: MembershipParamDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.membershipsService.remove(
-      params.id,
-      extractHemiaIdAuth(request),
-    );
+    return this.membershipsService.remove(params.id, currentUser);
   }
 }

@@ -1,18 +1,94 @@
 {
   "home": {
-    "consoleApi": "Console API",
-    "ready": "Lista",
-    "identityAccess": "Identity & Access",
-    "users": "Usuarios",
-    "accounts": "Cuentas",
-    "pending": "Pendiente",
-    "sectionTitle": "Operaciones iniciales",
-    "sectionDescription": "Shell listo para conectar datos reales de Console API en la siguiente fase.",
-    "quickLinks": {
-      "users": "Usuarios",
-      "invitations": "Invitaciones",
+    "activityDescription": "Ultimas mutaciones registradas por Console API.",
+    "activityEmptyDescription": "Cuando existan operaciones auditadas, apareceran aqui.",
+    "activityEmptyTitle": "Sin actividad reciente",
+    "activityTitle": "Actividad reciente",
+    "activityUnavailableDescription": "La auditoria puede requerir autenticacion, base de datos o endpoints adicionales.",
+    "activityUnavailableTitle": "Actividad no disponible",
+    "activityUnknownAction": "Accion desconocida",
+    "activityUnknownResource": "Recurso desconocido",
+    "cards": {
+      "activeAccount": "Cuenta activa",
+      "consoleApi": "Console API",
+      "hemiaId": "Hemia ID",
+      "oauthClients": "OAuth clients",
+      "pendingInvitations": "Invitaciones pendientes",
+      "ssoClients": "SSO clients",
       "tenants": "Tenants",
-      "oauthClients": "OAuth clients"
+      "users": "Usuarios"
+    },
+    "healthDescription": "Estado agregado desde health y base de datos de Hemia ID.",
+    "healthTitle": "Salud de identidad",
+    "invitationsDescription": "El backend aun no expone listado de invitaciones para calcular pendientes.",
+    "invitationsTitle": "Invitaciones pendientes",
+    "quickActionsDescription": "Entradas directas a los flujos operativos principales.",
+    "quickActionsTitle": "Accesos rapidos",
+    "quickLinks": {
+      "createOAuthClient": "Crear OAuth client",
+      "createTenant": "Crear tenant",
+      "createUser": "Crear usuario",
+      "inviteUser": "Invitar usuario"
+    },
+    "status": {
+      "connected": "Conectada",
+      "degraded": "Degradado",
+      "error": "Error",
+      "hemiaIdReachable": "Hemia ID responde",
+      "noActiveAccount": "Sin cuenta activa",
+      "ok": "OK",
+      "partialData": "Datos parciales",
+      "unavailable": "No disponible",
+      "unknown": "Desconocido"
+    }
+  },
+  "identityAccess": {
+    "oauthClients": {
+      "actions": {
+        "create": "Crear OAuth client"
+      },
+      "description": "Administra clientes OAuth, estado operativo y secretos one-time desde Console API.",
+      "title": "OAuth clients"
+    },
+    "users": {
+      "actions": {
+        "activate": "Activar",
+        "create": "Crear usuario",
+        "delete": "Eliminar",
+        "edit": "Editar usuario",
+        "lock": "Bloquear",
+        "search": "Buscar",
+        "suspend": "Suspender",
+        "unlock": "Desbloquear"
+      },
+      "description": "Administra altas, estado y bloqueo de usuarios desde Console API.",
+      "emptyDescription": "Ajusta los filtros o crea un usuario para comenzar.",
+      "emptyTitle": "Sin usuarios",
+      "errors": {
+        "load": "No se pudo cargar usuarios",
+        "operation": "No se pudo completar la operacion."
+      },
+      "fields": {
+        "displayName": "Display name",
+        "email": "Email",
+        "firstName": "Nombre",
+        "lastName": "Apellido",
+        "name": "Nombre completo",
+        "password": "Password",
+        "status": "Estado"
+      },
+      "filters": {
+        "allStatuses": "Todos los estados",
+        "searchPlaceholder": "Buscar por nombre o email"
+      },
+      "status": {
+        "active": "Activo",
+        "deleted": "Eliminado",
+        "locked": "Bloqueado",
+        "suspended": "Suspendido",
+        "unknown": "Desconocido"
+      },
+      "title": "Usuarios"
     }
   }
 }

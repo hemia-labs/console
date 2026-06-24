@@ -1,41 +1,39 @@
-import { Body, Controller, Param, Post, Req } from '@nestjs/common';
-import type { Request } from 'express';
+import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  CurrentUser,
+  SsoAuthGuard,
+  type CurrentUserPayload,
+} from '@hemia/auth/nestjs';
 import { CreateInvitationDto } from './dtos/create-invitation.dto';
 import { InvitationParamDto } from './dtos/invitation-param.dto';
 import { InvitationsService } from './invitations.service';
-import { extractHemiaIdAuth } from './utils/extract-hemia-id-auth.util';
 
+@UseGuards(SsoAuthGuard)
 @Controller('identity-access/invitations')
 export class InvitationsController {
   constructor(private readonly invitationsService: InvitationsService) {}
 
   @Post()
-  create(
+  async create(
     @Body() dto: CreateInvitationDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.invitationsService.create(dto, extractHemiaIdAuth(request));
+    return this.invitationsService.create(dto, currentUser);
   }
 
   @Post(':id/resend')
-  resend(
+  async resend(
     @Param() params: InvitationParamDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.invitationsService.resend(
-      params.id,
-      extractHemiaIdAuth(request),
-    );
+    return this.invitationsService.resend(params.id, currentUser);
   }
 
   @Post(':id/cancel')
-  cancel(
+  async cancel(
     @Param() params: InvitationParamDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.invitationsService.cancel(
-      params.id,
-      extractHemiaIdAuth(request),
-    );
+    return this.invitationsService.cancel(params.id, currentUser);
   }
 }

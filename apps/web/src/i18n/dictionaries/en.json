@@ -1,18 +1,94 @@
 {
   "home": {
-    "consoleApi": "Console API",
-    "ready": "Ready",
-    "identityAccess": "Identity & Access",
-    "users": "Users",
-    "accounts": "Accounts",
-    "pending": "Pending",
-    "sectionTitle": "Initial operations",
-    "sectionDescription": "Shell ready to connect real Console API data in the next phase.",
-    "quickLinks": {
-      "users": "Users",
-      "invitations": "Invitations",
+    "activityDescription": "Latest mutations recorded by Console API.",
+    "activityEmptyDescription": "Audited operations will appear here when available.",
+    "activityEmptyTitle": "No recent activity",
+    "activityTitle": "Recent activity",
+    "activityUnavailableDescription": "Audit may require authentication, database access, or additional endpoints.",
+    "activityUnavailableTitle": "Activity unavailable",
+    "activityUnknownAction": "Unknown action",
+    "activityUnknownResource": "Unknown resource",
+    "cards": {
+      "activeAccount": "Active account",
+      "consoleApi": "Console API",
+      "hemiaId": "Hemia ID",
+      "oauthClients": "OAuth clients",
+      "pendingInvitations": "Pending invitations",
+      "ssoClients": "SSO clients",
       "tenants": "Tenants",
-      "oauthClients": "OAuth clients"
+      "users": "Users"
+    },
+    "healthDescription": "Aggregated status from Hemia ID health and database checks.",
+    "healthTitle": "Identity health",
+    "invitationsDescription": "The backend does not expose an invitations list yet, so pending count is unavailable.",
+    "invitationsTitle": "Pending invitations",
+    "quickActionsDescription": "Direct entries into primary operational flows.",
+    "quickActionsTitle": "Quick actions",
+    "quickLinks": {
+      "createOAuthClient": "Create OAuth client",
+      "createTenant": "Create tenant",
+      "createUser": "Create user",
+      "inviteUser": "Invite user"
+    },
+    "status": {
+      "connected": "Connected",
+      "degraded": "Degraded",
+      "error": "Error",
+      "hemiaIdReachable": "Hemia ID reachable",
+      "noActiveAccount": "No active account",
+      "ok": "OK",
+      "partialData": "Partial data",
+      "unavailable": "Unavailable",
+      "unknown": "Unknown"
+    }
+  },
+  "identityAccess": {
+    "oauthClients": {
+      "actions": {
+        "create": "Create OAuth client"
+      },
+      "description": "Manage OAuth clients, operational status, and one-time secrets through Console API.",
+      "title": "OAuth clients"
+    },
+    "users": {
+      "actions": {
+        "activate": "Activate",
+        "create": "Create user",
+        "delete": "Delete",
+        "edit": "Edit user",
+        "lock": "Lock",
+        "search": "Search",
+        "suspend": "Suspend",
+        "unlock": "Unlock"
+      },
+      "description": "Manage user creation, status, and locking through Console API.",
+      "emptyDescription": "Adjust filters or create a user to get started.",
+      "emptyTitle": "No users",
+      "errors": {
+        "load": "Could not load users",
+        "operation": "Could not complete the operation."
+      },
+      "fields": {
+        "displayName": "Display name",
+        "email": "Email",
+        "firstName": "First name",
+        "lastName": "Last name",
+        "name": "Full name",
+        "password": "Password",
+        "status": "Status"
+      },
+      "filters": {
+        "allStatuses": "All statuses",
+        "searchPlaceholder": "Search by name or email"
+      },
+      "status": {
+        "active": "Active",
+        "deleted": "Deleted",
+        "locked": "Locked",
+        "suspended": "Suspended",
+        "unknown": "Unknown"
+      },
+      "title": "Users"
     }
   }
 }

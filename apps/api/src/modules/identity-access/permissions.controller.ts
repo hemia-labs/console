@@ -1,40 +1,45 @@
-import { Body, Controller, Get, Param, Post, Req } from '@nestjs/common';
-import type { Request } from 'express';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  CurrentUser,
+  SsoAuthGuard,
+  type CurrentUserPayload,
+} from '@hemia/auth/nestjs';
 import { CreatePermissionDto } from './dtos/create-permission.dto';
 import { PermissionParamDto } from './dtos/permission-param.dto';
 import { PermissionsService } from './permissions.service';
-import { extractHemiaIdAuth } from './utils/extract-hemia-id-auth.util';
 
+@UseGuards(SsoAuthGuard)
 @Controller('identity-access/permissions')
 export class PermissionsController {
   constructor(private readonly permissionsService: PermissionsService) {}
 
   @Get()
-  findAll(@Req() request: Request): Promise<unknown> {
-    return this.permissionsService.findAll(extractHemiaIdAuth(request));
+  async findAll(
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ): Promise<unknown> {
+    return this.permissionsService.findAll(currentUser);
   }
 
   @Post()
-  create(
+  async create(
     @Body() dto: CreatePermissionDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.permissionsService.create(dto, extractHemiaIdAuth(request));
+    return this.permissionsService.create(dto, currentUser);
   }
 
   @Post('sync-base')
-  syncBase(@Req() request: Request): Promise<unknown> {
-    return this.permissionsService.syncBase(extractHemiaIdAuth(request));
+  async syncBase(
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ): Promise<unknown> {
+    return this.permissionsService.syncBase(currentUser);
   }
 
   @Get(':id')
-  findOne(
+  async findOne(
     @Param() params: PermissionParamDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.permissionsService.findOne(
-      params.id,
-      extractHemiaIdAuth(request),
-    );
+    return this.permissionsService.findOne(params.id, currentUser);
   }
 }

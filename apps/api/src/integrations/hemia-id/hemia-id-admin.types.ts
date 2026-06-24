@@ -16,6 +16,7 @@ export type HemiaIdAdminQueryValue =
 export interface HemiaIdAdminAuth {
   authorization?: string;
   cookie?: string;
+  tenantId?: string;
 }
 
 export interface HemiaIdAdminRequestOptions {

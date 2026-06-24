@@ -6,55 +6,60 @@ import {
   Param,
   Patch,
   Post,
-  Req,
+  UseGuards,
 } from '@nestjs/common';
-import type { Request } from 'express';
+import {
+  CurrentUser,
+  SsoAuthGuard,
+  type CurrentUserPayload,
+} from '@hemia/auth/nestjs';
 import { CreateTeamDto } from './dtos/create-team.dto';
 import { TeamParamDto } from './dtos/team-param.dto';
 import { UpdateTeamDto } from './dtos/update-team.dto';
 import { TeamsService } from './teams.service';
-import { extractHemiaIdAuth } from './utils/extract-hemia-id-auth.util';
 
+@UseGuards(SsoAuthGuard)
 @Controller('identity-access/teams')
 export class TeamsController {
   constructor(private readonly teamsService: TeamsService) {}
 
   @Get()
-  findAll(@Req() request: Request): Promise<unknown> {
-    return this.teamsService.findAll(extractHemiaIdAuth(request));
+  async findAll(
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ): Promise<unknown> {
+    return this.teamsService.findAll(currentUser);
   }
 
   @Post()
-  create(@Body() dto: CreateTeamDto, @Req() request: Request): Promise<unknown> {
-    return this.teamsService.create(dto, extractHemiaIdAuth(request));
+  async create(
+    @Body() dto: CreateTeamDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ): Promise<unknown> {
+    return this.teamsService.create(dto, currentUser);
   }
 
   @Get(':id')
-  findOne(
+  async findOne(
     @Param() params: TeamParamDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.teamsService.findOne(params.id, extractHemiaIdAuth(request));
+    return this.teamsService.findOne(params.id, currentUser);
   }
 
   @Patch(':id')
-  update(
+  async update(
     @Param() params: TeamParamDto,
     @Body() dto: UpdateTeamDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.teamsService.update(
-      params.id,
-      dto,
-      extractHemiaIdAuth(request),
-    );
+    return this.teamsService.update(params.id, dto, currentUser);
   }
 
   @Delete(':id')
-  remove(
+  async remove(
     @Param() params: TeamParamDto,
-    @Req() request: Request,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ): Promise<unknown> {
-    return this.teamsService.remove(params.id, extractHemiaIdAuth(request));
+    return this.teamsService.remove(params.id, currentUser);
   }
 }
