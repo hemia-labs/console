@@ -8,17 +8,15 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import {
-  CurrentUser,
-  SsoAuthGuard,
-  type CurrentUserPayload,
-} from '@hemia/auth/nestjs';
+import { CurrentUser, type CurrentUserPayload } from '@hemia/auth/nestjs';
+
+import { SsoCurrentUserAuthGuard } from './sso-current-user-auth.guard';
 import { CreateOrganizationDto } from './dtos/create-organization.dto';
 import { OrganizationParamDto } from './dtos/organization-param.dto';
 import { UpdateOrganizationDto } from './dtos/update-organization.dto';
 import { OrganizationsService } from './organizations.service';
 
-@UseGuards(SsoAuthGuard)
+@UseGuards(SsoCurrentUserAuthGuard)
 @Controller('identity-access/organizations')
 export class OrganizationsController {
   constructor(private readonly organizationsService: OrganizationsService) {}

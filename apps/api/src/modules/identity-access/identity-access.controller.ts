@@ -1,13 +1,11 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
-import {
-  CurrentUser,
-  SsoAuthGuard,
-  type CurrentUserPayload,
-} from '@hemia/auth/nestjs';
+import { CurrentUser, type CurrentUserPayload } from '@hemia/auth/nestjs';
+
+import { SsoCurrentUserAuthGuard } from './sso-current-user-auth.guard';
 import { HemiaIdHealthDto } from './dtos/hemia-id-health.dto';
 import { IdentityAccessService } from './identity-access.service';
 
-@UseGuards(SsoAuthGuard)
+@UseGuards(SsoCurrentUserAuthGuard)
 @Controller('identity-access')
 export class IdentityAccessController {
   constructor(private readonly identityAccessService: IdentityAccessService) {}

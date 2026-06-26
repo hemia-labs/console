@@ -8,11 +8,9 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import {
-  CurrentUser,
-  SsoAuthGuard,
-  type CurrentUserPayload,
-} from '@hemia/auth/nestjs';
+import { CurrentUser, type CurrentUserPayload } from '@hemia/auth/nestjs';
+
+import { SsoCurrentUserAuthGuard } from './sso-current-user-auth.guard';
 import { AssignPermissionToRoleDto } from './dtos/assign-permission-to-role.dto';
 import { AssignRoleToUserDto } from './dtos/assign-role-to-user.dto';
 import { CreateRoleDto } from './dtos/create-role.dto';
@@ -23,7 +21,7 @@ import { RoleUserParamDto } from './dtos/role-user-param.dto';
 import { UpdateRoleDto } from './dtos/update-role.dto';
 import { RolesService } from './roles.service';
 
-@UseGuards(SsoAuthGuard)
+@UseGuards(SsoCurrentUserAuthGuard)
 @Controller('identity-access/roles')
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}

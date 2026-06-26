@@ -1,14 +1,12 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
-import {
-  CurrentUser,
-  SsoAuthGuard,
-  type CurrentUserPayload,
-} from '@hemia/auth/nestjs';
+import { CurrentUser, type CurrentUserPayload } from '@hemia/auth/nestjs';
+
+import { SsoCurrentUserAuthGuard } from './sso-current-user-auth.guard';
 import { CreatePermissionDto } from './dtos/create-permission.dto';
 import { PermissionParamDto } from './dtos/permission-param.dto';
 import { PermissionsService } from './permissions.service';
 
-@UseGuards(SsoAuthGuard)
+@UseGuards(SsoCurrentUserAuthGuard)
 @Controller('identity-access/permissions')
 export class PermissionsController {
   constructor(private readonly permissionsService: PermissionsService) {}

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { HemiaIdModule } from '../../integrations/hemia-id/hemia-id.module';
+import { RedisModule } from '../auth/redis.module';
 import { AccountsController } from './accounts.controller';
 import { AccountsService } from './accounts.service';
 import { ExternalIdentityAccessController } from './external-identity-access.controller';
@@ -18,6 +19,7 @@ import { PermissionsController } from './permissions.controller';
 import { PermissionsService } from './permissions.service';
 import { RolesController } from './roles.controller';
 import { RolesService } from './roles.service';
+import { SsoCurrentUserAuthGuard } from './sso-current-user-auth.guard';
 import { SsoClientsController } from './sso-clients.controller';
 import { SsoClientsService } from './sso-clients.service';
 import { TeamsController } from './teams.controller';
@@ -28,7 +30,7 @@ import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
 @Module({
-  imports: [HemiaIdModule],
+  imports: [HemiaIdModule, RedisModule],
   controllers: [
     IdentityAccessController,
     TenantsController,
@@ -53,6 +55,7 @@ import { UsersService } from './users.service';
     MembershipsService,
     InvitationsService,
     RolesService,
+    SsoCurrentUserAuthGuard,
     PermissionsService,
     OAuthClientsService,
     SsoClientsService,

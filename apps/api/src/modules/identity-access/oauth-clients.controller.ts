@@ -8,11 +8,9 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import {
-  CurrentUser,
-  SsoAuthGuard,
-  type CurrentUserPayload,
-} from '@hemia/auth/nestjs';
+import { CurrentUser, type CurrentUserPayload } from '@hemia/auth/nestjs';
+
+import { SsoCurrentUserAuthGuard } from './sso-current-user-auth.guard';
 import { CreateOAuthClientDto } from './dtos/create-oauth-client.dto';
 import {
   OAuthClientListValueDto,
@@ -22,7 +20,7 @@ import { OAuthClientParamDto } from './dtos/oauth-client-param.dto';
 import { UpdateOAuthClientDto } from './dtos/update-oauth-client.dto';
 import { OAuthClientsService } from './oauth-clients.service';
 
-@UseGuards(SsoAuthGuard)
+@UseGuards(SsoCurrentUserAuthGuard)
 @Controller('identity-access/oauth-clients')
 export class OAuthClientsController {
   constructor(private readonly oauthClientsService: OAuthClientsService) {}

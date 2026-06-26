@@ -8,17 +8,15 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import {
-  CurrentUser,
-  SsoAuthGuard,
-  type CurrentUserPayload,
-} from '@hemia/auth/nestjs';
+import { CurrentUser, type CurrentUserPayload } from '@hemia/auth/nestjs';
+
+import { SsoCurrentUserAuthGuard } from './sso-current-user-auth.guard';
 import { CreateTeamDto } from './dtos/create-team.dto';
 import { TeamParamDto } from './dtos/team-param.dto';
 import { UpdateTeamDto } from './dtos/update-team.dto';
 import { TeamsService } from './teams.service';
 
-@UseGuards(SsoAuthGuard)
+@UseGuards(SsoCurrentUserAuthGuard)
 @Controller('identity-access/teams')
 export class TeamsController {
   constructor(private readonly teamsService: TeamsService) {}

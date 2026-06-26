@@ -9,18 +9,16 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import {
-  CurrentUser,
-  SsoAuthGuard,
-  type CurrentUserPayload,
-} from '@hemia/auth/nestjs';
+import { CurrentUser, type CurrentUserPayload } from '@hemia/auth/nestjs';
+
+import { SsoCurrentUserAuthGuard } from './sso-current-user-auth.guard';
 import { CreateMembershipDto } from './dtos/create-membership.dto';
 import { ListMembershipsQueryDto } from './dtos/list-memberships-query.dto';
 import { MembershipParamDto } from './dtos/membership-param.dto';
 import { UpdateMembershipStatusDto } from './dtos/update-membership-status.dto';
 import { MembershipsService } from './memberships.service';
 
-@UseGuards(SsoAuthGuard)
+@UseGuards(SsoCurrentUserAuthGuard)
 @Controller('identity-access/memberships')
 export class MembershipsController {
   constructor(private readonly membershipsService: MembershipsService) {}

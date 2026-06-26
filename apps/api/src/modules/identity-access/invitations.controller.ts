@@ -1,14 +1,12 @@
 import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
-import {
-  CurrentUser,
-  SsoAuthGuard,
-  type CurrentUserPayload,
-} from '@hemia/auth/nestjs';
+import { CurrentUser, type CurrentUserPayload } from '@hemia/auth/nestjs';
+
+import { SsoCurrentUserAuthGuard } from './sso-current-user-auth.guard';
 import { CreateInvitationDto } from './dtos/create-invitation.dto';
 import { InvitationParamDto } from './dtos/invitation-param.dto';
 import { InvitationsService } from './invitations.service';
 
-@UseGuards(SsoAuthGuard)
+@UseGuards(SsoCurrentUserAuthGuard)
 @Controller('identity-access/invitations')
 export class InvitationsController {
   constructor(private readonly invitationsService: InvitationsService) {}

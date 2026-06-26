@@ -8,17 +8,15 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import {
-  CurrentUser,
-  SsoAuthGuard,
-  type CurrentUserPayload,
-} from '@hemia/auth/nestjs';
+import { CurrentUser, type CurrentUserPayload } from '@hemia/auth/nestjs';
+
+import { SsoCurrentUserAuthGuard } from './sso-current-user-auth.guard';
 import type { Response } from 'express';
 import { AccountsService } from './accounts.service';
 import { AccountIndexParamDto } from './dtos/account-index-param.dto';
 import { SwitchAccountDto } from './dtos/switch-account.dto';
 
-@UseGuards(SsoAuthGuard)
+@UseGuards(SsoCurrentUserAuthGuard)
 @Controller('identity-access/accounts')
 export class AccountsController {
   constructor(private readonly accountsService: AccountsService) {}

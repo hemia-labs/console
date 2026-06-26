@@ -8,17 +8,15 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import {
-  CurrentUser,
-  SsoAuthGuard,
-  type CurrentUserPayload,
-} from '@hemia/auth/nestjs';
+import { CurrentUser, type CurrentUserPayload } from '@hemia/auth/nestjs';
+
+import { SsoCurrentUserAuthGuard } from './sso-current-user-auth.guard';
 import { CreateSsoClientDto } from './dtos/create-sso-client.dto';
 import { SsoClientParamDto } from './dtos/sso-client-param.dto';
 import { UpdateSsoClientDto } from './dtos/update-sso-client.dto';
 import { SsoClientsService } from './sso-clients.service';
 
-@UseGuards(SsoAuthGuard)
+@UseGuards(SsoCurrentUserAuthGuard)
 @Controller('identity-access/sso-clients')
 export class SsoClientsController {
   constructor(private readonly ssoClientsService: SsoClientsService) {}

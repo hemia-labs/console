@@ -9,11 +9,9 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import {
-  CurrentUser,
-  SsoAuthGuard,
-  type CurrentUserPayload,
-} from '@hemia/auth/nestjs';
+import { CurrentUser, type CurrentUserPayload } from '@hemia/auth/nestjs';
+
+import { SsoCurrentUserAuthGuard } from './sso-current-user-auth.guard';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { ListUsersQueryDto } from './dtos/list-users-query.dto';
 import { UpdateUserStatusDto } from './dtos/update-user-status.dto';
@@ -21,7 +19,7 @@ import { UpdateUserDto } from './dtos/update-user.dto';
 import { UserParamDto } from './dtos/user-param.dto';
 import { UsersService } from './users.service';
 
-@UseGuards(SsoAuthGuard)
+@UseGuards(SsoCurrentUserAuthGuard)
 @Controller('identity-access/users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
