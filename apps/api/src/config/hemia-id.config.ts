@@ -12,12 +12,11 @@ export default registerAs('hemiaId', () => ({
   ),
   adminPrefix: withLeadingSlash(process.env.HEMIA_ID_ADMIN_PREFIX ?? '/api/v1'),
   timeoutMs: Number(process.env.HEMIA_ID_TIMEOUT_MS) || 5000,
-  external: {
-    clientId: process.env.HEMIA_ID_EXTERNAL_CLIENT_ID,
-    clientSecret: process.env.HEMIA_ID_EXTERNAL_CLIENT_SECRET,
-    scopes: process.env.HEMIA_ID_EXTERNAL_SCOPES,
-    tokenUrl: withLeadingSlash(
-      process.env.HEMIA_ID_EXTERNAL_TOKEN_URL ?? '/oauth/token',
-    ),
+  service: {
+    clientId: 'identity-admin-service',
+    clientSecret: process.env.SSO_IDENTITY_ADMIN_SERVICE_SECRET,
+    scopes:
+      'identity.oauth_clients.read identity.oauth_clients.create identity.oauth_clients.update identity.oauth_clients.delete',
+    tokenUrl: '/oauth/token',
   },
 }));

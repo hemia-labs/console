@@ -29,10 +29,6 @@ type AuthSession = {
   user?: SessionUser;
 };
 
-type LogoutResponse = {
-  logoutUrl?: string;
-};
-
 function getConsoleApiBaseUrl() {
   return (
     process.env.NEXT_PUBLIC_CONSOLE_API_BASE_URL?.replace(/\/+$/, "") ??
@@ -99,17 +95,10 @@ export function UserAvatar({ locale }: { locale: string }) {
     setLoggingOut(true);
 
     try {
-      const out = (await fetch(`${getConsoleApiBaseUrl()}/auth/logout`, {
+      await fetch(`${getConsoleApiBaseUrl()}/auth/logout`, {
         credentials: "include",
         method: "POST",
-      }).then((response) => response.json())) as LogoutResponse;
-
-      if (out.logoutUrl) {
-        await fetch(out.logoutUrl, {
-          credentials: "include",
-          method: "POST",
-        });
-      }
+      });
     } finally {
       window.location.assign(`/${locale}`);
     }

@@ -3,21 +3,13 @@ import { isLocale } from "@/i18n/config";
 import {
   Activity,
   BriefcaseBusiness,
-  Building2,
   FolderKanban,
   Gauge,
   KeyRound,
   LayoutDashboard,
-  LockKeyhole,
-  MonitorCog,
-  Network,
-  Send,
   Settings,
-  ShieldCheck,
   ShieldUser,
-  SquareStack,
   Users,
-  UserRoundCog,
 } from "lucide-react";
 
 export type NavItem = {
@@ -48,48 +40,6 @@ export const nav: NavItem[] = [
         icon: Users,
       },
       {
-        href: "/identity-access/invitations",
-        label: "Invitaciones",
-        description: "Altas pendientes y reenvios",
-        icon: Send,
-      },
-      {
-        href: "/identity-access/roles",
-        label: "Roles",
-        description: "Roles operativos y asignaciones",
-        icon: ShieldCheck,
-      },
-      {
-        href: "/identity-access/permissions",
-        label: "Permisos",
-        description: "Permisos disponibles para roles",
-        icon: LockKeyhole,
-      },
-      {
-        href: "/identity-access/tenants",
-        label: "Tenants",
-        description: "Tenants administrados por Hemia ID",
-        icon: Building2,
-      },
-      {
-        href: "/identity-access/organizations",
-        label: "Organizaciones",
-        description: "Organizaciones asociadas a tenants",
-        icon: Network,
-      },
-      {
-        href: "/identity-access/teams",
-        label: "Teams",
-        description: "Equipos y pertenencia operativa",
-        icon: SquareStack,
-      },
-      {
-        href: "/identity-access/memberships",
-        label: "Membresias",
-        description: "Relaciones usuario-organizacion-team",
-        icon: UserRoundCog,
-      },
-      {
         href: "/identity-access/accounts",
         label: "Cuentas",
         description: "Cuentas locales conectadas a Hemia ID",
@@ -100,12 +50,6 @@ export const nav: NavItem[] = [
         label: "OAuth clients",
         description: "Clientes OAuth y secretos one-time",
         icon: BriefcaseBusiness,
-      },
-      {
-        href: "/identity-access/sso-clients",
-        label: "SSO clients",
-        description: "Configuracion de clientes SSO",
-        icon: MonitorCog,
       },
     ],
   },

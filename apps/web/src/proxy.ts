@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { defaultLocale, isLocale, locales } from "@/i18n/config";
 
 const LOCALE_COOKIE = "NEXT_LOCALE";
-const SESSION_COOKIE = "hemia_session"; // set by Console API /auth/callback (sso.config.ts)
+const SESSION_COOKIE = "console_session"; // set by Console API /auth/callback (sso.config.ts)
 const DEFAULT_BACKEND_URL = "http://localhost:3016";
 
 // ponytail: naive Accept-Language parse + cookie preference; swap for negotiator/intl-localematcher if q-value ranking matters.
@@ -29,6 +29,10 @@ export function proxy(req: NextRequest) {
 
   // 2. SSO gate: no session -> backend login. It redirects back here after /auth/callback.
   if (!req.cookies.get(SESSION_COOKIE)?.value) {
+    if (req.nextUrl.searchParams.get("error") === "auth_failed") {
+      return NextResponse.next();
+    }
+
     const backend = process.env.NEXT_PUBLIC_CONSOLE_API_BASE_URL ?? DEFAULT_BACKEND_URL;
     const loginUrl = new URL("/auth/login", backend);
     loginUrl.searchParams.set("returnTo", `${pathname}${search}`); // same-origin path, starts with "/"

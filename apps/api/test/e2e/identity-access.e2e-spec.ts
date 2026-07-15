@@ -13,8 +13,9 @@ describe('IdentityAccessController (e2e)', () => {
     hemiaIdAdminClient = {
       request: jest
         .fn()
-        .mockResolvedValueOnce({ status: 'ok' })
-        .mockResolvedValueOnce({ database: 'ok' }),
+        .mockResolvedValueOnce({ live: 'ok' })
+        .mockResolvedValueOnce({ startup: 'ok' })
+        .mockResolvedValueOnce({ ready: 'ok' }),
     };
 
     const moduleFixture: TestingModule = await createIdentityAccessE2eTestingModule()
@@ -34,13 +35,14 @@ describe('IdentityAccessController (e2e)', () => {
       .expect(200)
       .expect({
         status: 'ok',
-        hemiaId: { status: 'ok' },
-        database: { database: 'ok' },
+        live: { live: 'ok' },
+        startup: { startup: 'ok' },
+        ready: { ready: 'ok' },
       });
 
     expect(hemiaIdAdminClient.request).toHaveBeenNthCalledWith(1, {
       method: 'GET',
-      path: '/health',
+      path: '/health/live',
       auth: {
         authorization: 'Bearer access-token',
         cookie: 'access_token=cookie-token',
@@ -48,7 +50,15 @@ describe('IdentityAccessController (e2e)', () => {
     });
     expect(hemiaIdAdminClient.request).toHaveBeenNthCalledWith(2, {
       method: 'GET',
-      path: '/health/db',
+      path: '/health/startup',
+      auth: {
+        authorization: 'Bearer access-token',
+        cookie: 'access_token=cookie-token',
+      },
+    });
+    expect(hemiaIdAdminClient.request).toHaveBeenNthCalledWith(3, {
+      method: 'GET',
+      path: '/health/ready',
       auth: {
         authorization: 'Bearer access-token',
         cookie: 'access_token=cookie-token',

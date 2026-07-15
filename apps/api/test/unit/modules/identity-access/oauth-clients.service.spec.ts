@@ -11,7 +11,7 @@ import { OAuthClientsService } from 'src/modules/identity-access/oauth-clients.s
 
 describe('OAuthClientsService', () => {
   let service: OAuthClientsService;
-  let hemiaIdAdminClient: { request: jest.Mock };
+  let hemiaIdAdminClient: { requestService: jest.Mock };
 
   const auth = {
     authorization: 'Bearer access-token',
@@ -20,7 +20,7 @@ describe('OAuthClientsService', () => {
 
   beforeEach(async () => {
     hemiaIdAdminClient = {
-      request: jest.fn().mockResolvedValue({ ok: true }),
+      requestService: jest.fn().mockResolvedValue({ ok: true }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -39,7 +39,7 @@ describe('OAuthClientsService', () => {
   it('finds all OAuth clients', async () => {
     await service.findAll(auth);
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'GET',
       path: '/oauth-clients',
       auth,
@@ -49,7 +49,7 @@ describe('OAuthClientsService', () => {
   it('finds one OAuth client', async () => {
     await service.findOne('client-id', auth);
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'GET',
       path: '/oauth-clients/client-id',
       auth,
@@ -71,7 +71,7 @@ describe('OAuthClientsService', () => {
 
     await service.create(dto, auth);
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'POST',
       path: '/oauth-clients',
       body: dto,
@@ -87,7 +87,7 @@ describe('OAuthClientsService', () => {
 
     await service.update('client-id', dto, auth);
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'PATCH',
       path: '/oauth-clients/client-id',
       body: dto,
@@ -98,7 +98,7 @@ describe('OAuthClientsService', () => {
   it('rotates an OAuth client secret without body', async () => {
     await service.rotateSecret('client-id', auth);
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'POST',
       path: '/oauth-clients/client-id/rotate-secret',
       auth,
@@ -113,7 +113,7 @@ describe('OAuthClientsService', () => {
   ])('adds OAuth client %s value', async (listPath, value) => {
     await service.addListValue('client-id', listPath, { value }, auth);
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'POST',
       path: `/oauth-clients/client-id/${listPath}`,
       body: { value },
@@ -129,7 +129,7 @@ describe('OAuthClientsService', () => {
   ])('removes OAuth client %s value', async (listPath, value) => {
     await service.removeListValue('client-id', listPath, { value }, auth);
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'DELETE',
       path: `/oauth-clients/client-id/${listPath}`,
       body: { value },
@@ -140,7 +140,7 @@ describe('OAuthClientsService', () => {
   it('removes an OAuth client', async () => {
     await service.remove('client-id', auth);
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'DELETE',
       path: '/oauth-clients/client-id',
       auth,
@@ -152,7 +152,7 @@ describe('OAuthClientsService', () => {
     new ForbiddenException('Forbidden'),
     new ServiceUnavailableException('Hemia ID down'),
   ])('propagates Hemia ID client exception %p', async (exception) => {
-    hemiaIdAdminClient.request.mockRejectedValue(exception);
+    hemiaIdAdminClient.requestService.mockRejectedValue(exception);
 
     await expect(service.findAll(auth)).rejects.toBe(exception);
   });

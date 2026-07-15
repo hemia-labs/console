@@ -8,23 +8,29 @@ export class IdentityAccessService {
   constructor(private readonly hemiaIdAdminClient: HemiaIdAdminClient) {}
 
   async getHemiaIdHealth(auth: HemiaIdAdminAuth): Promise<HemiaIdHealthDto> {
-    const [hemiaId, database] = await Promise.all([
+    const [live, startup, ready] = await Promise.all([
       this.hemiaIdAdminClient.request<unknown>({
         method: 'GET',
-        path: '/health',
+        path: '/health/live',
         auth,
       }),
       this.hemiaIdAdminClient.request<unknown>({
         method: 'GET',
-        path: '/health/db',
+        path: '/health/startup',
+        auth,
+      }),
+      this.hemiaIdAdminClient.request<unknown>({
+        method: 'GET',
+        path: '/health/ready',
         auth,
       }),
     ]);
 
     return {
       status: 'ok',
-      hemiaId,
-      database,
+      live,
+      startup,
+      ready,
     };
   }
 }

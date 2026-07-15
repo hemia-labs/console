@@ -25,29 +25,36 @@ describe('IdentityAccessService', () => {
     service = module.get(IdentityAccessService);
   });
 
-  it('checks Hemia ID and database health with forwarded auth', async () => {
+  it('checks Hemia ID health endpoints with forwarded auth', async () => {
     const auth = {
       authorization: 'Bearer access-token',
       cookie: 'access_token=cookie-token',
     };
     hemiaIdAdminClient.request
-      .mockResolvedValueOnce({ status: 'ok' })
-      .mockResolvedValueOnce({ database: 'ok' });
+      .mockResolvedValueOnce({ live: 'ok' })
+      .mockResolvedValueOnce({ startup: 'ok' })
+      .mockResolvedValueOnce({ ready: 'ok' });
 
     await expect(service.getHemiaIdHealth(auth)).resolves.toEqual({
       status: 'ok',
-      hemiaId: { status: 'ok' },
-      database: { database: 'ok' },
+      live: { live: 'ok' },
+      startup: { startup: 'ok' },
+      ready: { ready: 'ok' },
     });
 
     expect(hemiaIdAdminClient.request).toHaveBeenNthCalledWith(1, {
       method: 'GET',
-      path: '/health',
+      path: '/health/live',
       auth,
     });
     expect(hemiaIdAdminClient.request).toHaveBeenNthCalledWith(2, {
       method: 'GET',
-      path: '/health/db',
+      path: '/health/startup',
+      auth,
+    });
+    expect(hemiaIdAdminClient.request).toHaveBeenNthCalledWith(3, {
+      method: 'GET',
+      path: '/health/ready',
       auth,
     });
   });

@@ -2,19 +2,16 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import {
   Activity,
-  Building2,
-  Clock,
   ExternalLink,
   KeyRound,
+  LogIn,
   Plus,
-  Send,
+  ShieldAlert,
   Server,
-  ShieldCheck,
   UserPlus,
   Users,
 } from "lucide-react";
 import { AppBreadcrumb } from "@/components/app-breadcrumb";
-import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { StatusBadge, type StatusBadgeTone } from "@/components/status-badge";
@@ -28,24 +25,10 @@ type QueryResult<T> =
   | { data: null; error: Error; ok: false };
 
 type HemiaIdHealth = {
-  database?: unknown;
-  hemiaId?: unknown;
+  live?: unknown;
+  ready?: unknown;
   status?: string;
-};
-
-type AuditEvent = {
-  action?: string;
-  createdAt?: string;
-  id?: string;
-  resource?: string;
-  status?: string;
-};
-
-type AuditResponse = {
-  data?: AuditEvent[];
-  limit?: number;
-  page?: number;
-  total?: number;
+  startup?: unknown;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -114,39 +97,74 @@ function healthTone(result: QueryResult<HemiaIdHealth>): StatusBadgeTone {
   return result.data.status === "degraded" ? "warning" : "success";
 }
 
-function auditTone(status?: string): StatusBadgeTone {
-  if (status === "success") return "success";
-  if (status === "failure") return "danger";
-  return "muted";
+function loginUrl(lang: Locale) {
+  const backend = process.env.NEXT_PUBLIC_CONSOLE_API_BASE_URL ?? "http://localhost:3016";
+  const url = new URL("/auth/login", backend);
+  url.searchParams.set("returnTo", `/${lang}`);
+  return url.toString();
 }
 
-function formatDate(value: string | undefined, locale: Locale) {
-  if (!value) return "";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-
-  return new Intl.DateTimeFormat(locale, {
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    month: "short",
-  }).format(date);
+function AuthFailedScreen({ lang }: { lang: Locale }) {
+  return (
+    <div className="grid min-h-[calc(100vh-var(--layout-topbar-height)-3rem)] place-items-center">
+      <section
+        aria-labelledby="auth-error-title"
+        className="w-full max-w-xl rounded-lg border border-border bg-card p-6 text-center shadow-sm"
+      >
+        <span className="mx-auto grid size-12 place-items-center rounded-full bg-red-50 text-red-600">
+          <ShieldAlert className="size-5" />
+        </span>
+        <h1 id="auth-error-title" className="mt-4 text-2xl font-bold text-foreground">
+          No se pudo iniciar sesion
+        </h1>
+        <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+          Identity rechazo el acceso o la sesion expiro durante el callback. La consola detuvo el
+          reintento automatico para evitar un ciclo de autenticacion.
+        </p>
+        <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+          <a
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            href={loginUrl(lang)}
+          >
+            <LogIn className="size-4" />
+            Intentar de nuevo
+          </a>
+          <Link
+            className="inline-flex h-12 items-center justify-center rounded-md border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            href={`/${lang}`}
+          >
+            Volver al inicio
+          </Link>
+        </div>
+      </section>
+    </div>
+  );
 }
 
-export default async function Home({ params }: { params: Promise<{ lang: Locale }> }) {
+export default async function Home({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ lang: Locale }>;
+  searchParams?: Promise<{ error?: string }>;
+}) {
   const { lang } = await params;
+  const query = await searchParams;
+
+  if (query?.error === "auth_failed") {
+    return <AuthFailedScreen lang={lang} />;
+  }
+
   const t = (await getDictionary(lang)).home;
   const requestHeaders = await dashboardHeaders();
 
   const quickLinks = [
     { href: "/identity-access/users", icon: UserPlus, label: t.quickLinks.createUser },
-    { href: "/identity-access/invitations", icon: Send, label: t.quickLinks.inviteUser },
-    { href: "/identity-access/tenants", icon: Building2, label: t.quickLinks.createTenant },
+    { href: "/identity-access/accounts", icon: KeyRound, label: t.quickLinks.accounts },
     { href: "/identity-access/oauth-clients", icon: Plus, label: t.quickLinks.createOAuthClient },
   ];
 
-  const [health, activeAccount, users, tenants, oauthClients, ssoClients, audit] = await Promise.all([
+  const [health, activeAccount, users, oauthClients] = await Promise.all([
     safeQuery(() =>
       consoleApi.get<HemiaIdHealth>("/identity-access/health/hemia-id", {
         headers: requestHeaders,
@@ -164,33 +182,14 @@ export default async function Home({ params }: { params: Promise<{ lang: Locale 
       })
     ),
     safeQuery(() =>
-      consoleApi.get<unknown>("/identity-access/tenants", {
-        headers: requestHeaders,
-        query: { limit: 1 },
-      })
-    ),
-    safeQuery(() =>
       consoleApi.get<unknown>("/identity-access/oauth-clients", {
         headers: requestHeaders,
         query: { limit: 1 },
       })
     ),
-    safeQuery(() =>
-      consoleApi.get<unknown>("/identity-access/sso-clients", {
-        headers: requestHeaders,
-        query: { limit: 1 },
-      })
-    ),
-    safeQuery(() =>
-      consoleApi.get<AuditResponse>("/identity-access/audit", {
-        headers: requestHeaders,
-        query: { limit: 5 },
-      })
-    ),
   ]);
 
-  const apiStatus = consoleStatus([health, activeAccount, users, tenants, oauthClients, ssoClients, audit]);
-  const auditEvents = audit.ok && Array.isArray(audit.data.data) ? audit.data.data : [];
+  const apiStatus = consoleStatus([health, activeAccount, users, oauthClients]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -230,25 +229,9 @@ export default async function Home({ params }: { params: Promise<{ lang: Locale 
           icon={<Users className="size-5" />}
         />
         <StatCard
-          label={t.cards.tenants}
-          value={valueOrError(tenants, t.status.unavailable, t.status.error)}
-          icon={<Building2 className="size-5" />}
-        />
-        <StatCard
-          label={t.cards.pendingInvitations}
-          value={t.status.unavailable}
-          tone="violet"
-          icon={<Send className="size-5" />}
-        />
-        <StatCard
           label={t.cards.oauthClients}
           value={valueOrError(oauthClients, t.status.unavailable, t.status.error)}
           icon={<KeyRound className="size-5" />}
-        />
-        <StatCard
-          label={t.cards.ssoClients}
-          value={valueOrError(ssoClients, t.status.unavailable, t.status.error)}
-          icon={<ShieldCheck className="size-5" />}
         />
       </div>
 
@@ -272,87 +255,22 @@ export default async function Home({ params }: { params: Promise<{ lang: Locale 
         </div>
       </div>
 
-      <div className="rounded-lg border border-border bg-card shadow-sm">
-        <div className="flex flex-col gap-3 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-base font-semibold">{t.activityTitle}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">{t.activityDescription}</p>
+            <h2 className="text-base font-semibold">{t.healthTitle}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{t.healthDescription}</p>
           </div>
           <StatusBadge
-            label={health.ok ? t.status.hemiaIdReachable : t.status.partialData}
+            label={
+              health.ok
+                ? health.data.status === "degraded"
+                  ? t.status.degraded
+                  : t.status.ok
+                : t.status.error
+            }
             tone={healthTone(health)}
           />
-        </div>
-        {auditEvents.length > 0 ? (
-          <div className="divide-y divide-border">
-            {auditEvents.map((event, index) => (
-              <div
-                className="grid min-h-12 gap-3 px-5 py-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center"
-                key={event.id ?? `${event.action}-${event.createdAt}-${index}`}
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{event.action ?? t.activityUnknownAction}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {event.resource ?? t.activityUnknownResource}
-                  </p>
-                </div>
-                <StatusBadge
-                  className="w-fit"
-                  label={event.status ?? t.status.unknown}
-                  tone={auditTone(event.status)}
-                />
-                <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
-                  <Clock className="size-3" />
-                  {formatDate(event.createdAt, lang)}
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="p-5">
-            <EmptyState
-              className="min-h-40 border-0 bg-transparent shadow-none"
-              description={audit.ok ? t.activityEmptyDescription : t.activityUnavailableDescription}
-              icon={<Clock className="size-5" />}
-              title={audit.ok ? t.activityEmptyTitle : t.activityUnavailableTitle}
-            />
-          </div>
-        )}
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-base font-semibold">{t.healthTitle}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">{t.healthDescription}</p>
-            </div>
-            <StatusBadge
-              label={
-                health.ok
-                  ? health.data.status === "degraded"
-                    ? t.status.degraded
-                    : t.status.ok
-                  : t.status.error
-              }
-              tone={healthTone(health)}
-            />
-          </div>
-        </div>
-        <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-base font-semibold">{t.invitationsTitle}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">{t.invitationsDescription}</p>
-            </div>
-            <Link
-              className="inline-flex h-12 shrink-0 items-center gap-2 rounded-md border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-              href={localizedHref(lang, "/identity-access/invitations")}
-            >
-              <Send className="size-4" />
-              <span className="hidden sm:inline">{t.quickLinks.inviteUser}</span>
-            </Link>
-          </div>
         </div>
       </div>
     </div>

@@ -18,13 +18,14 @@
       "tenants": "Tenants",
       "users": "Usuarios"
     },
-    "healthDescription": "Estado agregado desde health y base de datos de Hemia ID.",
+    "healthDescription": "Estado agregado desde liveness, startup y readiness de Hemia ID.",
     "healthTitle": "Salud de identidad",
     "invitationsDescription": "El backend aun no expone listado de invitaciones para calcular pendientes.",
     "invitationsTitle": "Invitaciones pendientes",
     "quickActionsDescription": "Entradas directas a los flujos operativos principales.",
     "quickActionsTitle": "Accesos rapidos",
     "quickLinks": {
+      "accounts": "Ver cuentas",
       "createOAuthClient": "Crear OAuth client",
       "createTenant": "Crear tenant",
       "createUser": "Crear usuario",

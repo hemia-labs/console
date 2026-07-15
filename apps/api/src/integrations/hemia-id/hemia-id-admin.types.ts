@@ -40,3 +40,8 @@ export interface HemiaIdAdminResponseWithMetadata<T = unknown> {
   body: T;
   metadata: HemiaIdAdminMetadata;
 }
+
+export interface HemiaIdServiceTokenResponse {
+  access_token?: unknown;
+  expires_in?: unknown;
+}

@@ -12,7 +12,7 @@ import { HemiaIdAdminClient } from '../../src/integrations/hemia-id/hemia-id-adm
 
 describe('OAuthClientsController (e2e)', () => {
   let app: INestApplication<App>;
-  let hemiaIdAdminClient: { request: jest.Mock };
+  let hemiaIdAdminClient: { requestService: jest.Mock };
 
   const oauthClientId = '2df6e282-1517-48ff-9441-8cf80e65399f';
   const auth = {
@@ -22,7 +22,7 @@ describe('OAuthClientsController (e2e)', () => {
 
   beforeEach(async () => {
     hemiaIdAdminClient = {
-      request: jest.fn().mockResolvedValue({ id: oauthClientId }),
+      requestService: jest.fn().mockResolvedValue({ id: oauthClientId }),
     };
 
     const moduleFixture: TestingModule = await createIdentityAccessE2eTestingModule()
@@ -47,7 +47,7 @@ describe('OAuthClientsController (e2e)', () => {
       .expect(200)
       .expect({ id: oauthClientId });
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'GET',
       path: '/oauth-clients',
       auth,
@@ -55,7 +55,7 @@ describe('OAuthClientsController (e2e)', () => {
   });
 
   it('POST /identity-access/oauth-clients validates, strips secrets, and returns one-time secret', async () => {
-    hemiaIdAdminClient.request.mockResolvedValueOnce({
+    hemiaIdAdminClient.requestService.mockResolvedValueOnce({
       id: oauthClientId,
       clientId: 'console-app',
       clientSecret: 'one-time-secret',
@@ -84,7 +84,7 @@ describe('OAuthClientsController (e2e)', () => {
         clientSecret: 'one-time-secret',
       });
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'POST',
       path: '/oauth-clients',
       body: {
@@ -140,7 +140,7 @@ describe('OAuthClientsController (e2e)', () => {
       .set('Cookie', auth.cookie)
       .expect(200);
 
-    expect(hemiaIdAdminClient.request).toHaveBeenLastCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenLastCalledWith({
       method: 'GET',
       path: `/oauth-clients/${oauthClientId}`,
       auth,
@@ -157,7 +157,7 @@ describe('OAuthClientsController (e2e)', () => {
       })
       .expect(200);
 
-    expect(hemiaIdAdminClient.request).toHaveBeenLastCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenLastCalledWith({
       method: 'PATCH',
       path: `/oauth-clients/${oauthClientId}`,
       body: {
@@ -174,7 +174,7 @@ describe('OAuthClientsController (e2e)', () => {
       .send({ ignored: true })
       .expect(200);
 
-    expect(hemiaIdAdminClient.request).toHaveBeenLastCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenLastCalledWith({
       method: 'DELETE',
       path: `/oauth-clients/${oauthClientId}`,
       auth,
@@ -186,7 +186,7 @@ describe('OAuthClientsController (e2e)', () => {
   });
 
   it('POST /identity-access/oauth-clients/:id/rotate-secret proxies without body and returns one-time secret', async () => {
-    hemiaIdAdminClient.request.mockResolvedValueOnce({
+    hemiaIdAdminClient.requestService.mockResolvedValueOnce({
       id: oauthClientId,
       clientSecret: 'rotated-secret',
     });
@@ -202,7 +202,7 @@ describe('OAuthClientsController (e2e)', () => {
         clientSecret: 'rotated-secret',
       });
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'POST',
       path: `/oauth-clients/${oauthClientId}/rotate-secret`,
       auth,
@@ -230,7 +230,7 @@ describe('OAuthClientsController (e2e)', () => {
       .expect(201)
       .expect({ id: oauthClientId });
 
-    expect(hemiaIdAdminClient.request).toHaveBeenLastCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenLastCalledWith({
       method: 'POST',
       path: `/oauth-clients/${oauthClientId}/${listPath}`,
       body: { value },
@@ -255,7 +255,7 @@ describe('OAuthClientsController (e2e)', () => {
       .expect(200)
       .expect({ id: oauthClientId });
 
-    expect(hemiaIdAdminClient.request).toHaveBeenLastCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenLastCalledWith({
       method: 'DELETE',
       path: `/oauth-clients/${oauthClientId}/${listPath}`,
       body: { value },
@@ -284,7 +284,7 @@ describe('OAuthClientsController (e2e)', () => {
     [new UnauthorizedException('Missing auth'), 401],
     [new ForbiddenException('Forbidden'), 403],
   ])('returns Hemia ID auth error %p', async (exception, statusCode) => {
-    hemiaIdAdminClient.request.mockRejectedValueOnce(exception);
+    hemiaIdAdminClient.requestService.mockRejectedValueOnce(exception);
 
     await request(app.getHttpServer())
       .get('/identity-access/oauth-clients')

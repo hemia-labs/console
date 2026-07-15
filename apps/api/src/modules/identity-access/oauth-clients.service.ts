@@ -19,7 +19,7 @@ export class OAuthClientsService {
   constructor(private readonly hemiaIdAdminClient: HemiaIdAdminClient) {}
 
   findAll(auth: HemiaIdAdminAuth): Promise<unknown> {
-    return this.hemiaIdAdminClient.request({
+    return this.hemiaIdAdminClient.requestService({
       method: 'GET',
       path: '/oauth-clients',
       auth,
@@ -27,7 +27,7 @@ export class OAuthClientsService {
   }
 
   findOne(id: string, auth: HemiaIdAdminAuth): Promise<unknown> {
-    return this.hemiaIdAdminClient.request({
+    return this.hemiaIdAdminClient.requestService({
       method: 'GET',
       path: `/oauth-clients/${id}`,
       auth,
@@ -35,7 +35,7 @@ export class OAuthClientsService {
   }
 
   create(dto: CreateOAuthClientDto, auth: HemiaIdAdminAuth): Promise<unknown> {
-    return this.hemiaIdAdminClient.request({
+    return this.hemiaIdAdminClient.requestService({
       method: 'POST',
       path: '/oauth-clients',
       body: dto,
@@ -48,7 +48,7 @@ export class OAuthClientsService {
     dto: UpdateOAuthClientDto,
     auth: HemiaIdAdminAuth,
   ): Promise<unknown> {
-    return this.hemiaIdAdminClient.request({
+    return this.hemiaIdAdminClient.requestService({
       method: 'PATCH',
       path: `/oauth-clients/${id}`,
       body: dto,
@@ -57,7 +57,7 @@ export class OAuthClientsService {
   }
 
   rotateSecret(id: string, auth: HemiaIdAdminAuth): Promise<unknown> {
-    return this.hemiaIdAdminClient.request({
+    return this.hemiaIdAdminClient.requestService({
       method: 'POST',
       path: `/oauth-clients/${id}/rotate-secret`,
       auth,
@@ -83,7 +83,7 @@ export class OAuthClientsService {
   }
 
   remove(id: string, auth: HemiaIdAdminAuth): Promise<unknown> {
-    return this.hemiaIdAdminClient.request({
+    return this.hemiaIdAdminClient.requestService({
       method: 'DELETE',
       path: `/oauth-clients/${id}`,
       auth,
@@ -97,7 +97,7 @@ export class OAuthClientsService {
     dto: OAuthClientListValueDto,
     auth: HemiaIdAdminAuth,
   ): Promise<unknown> {
-    return this.hemiaIdAdminClient.request({
+    return this.hemiaIdAdminClient.requestService({
       method,
       path: `/oauth-clients/${id}/${listPath}`,
       body: dto,
