@@ -12,7 +12,7 @@ export default registerAs('sso', (): SsoConfig => {
   const issuer = withoutTrailingSlash(
     env('SSO_ISSUER') ??
       process.env.HEMIA_ID_BASE_URL ??
-      'http://localhost:3000',
+      'http://localhost:4000',
   );
   const accessApiUrl = withoutTrailingSlash(
     env('ACCESS_API_URL') ?? 'http://localhost:3019',
@@ -21,9 +21,9 @@ export default registerAs('sso', (): SsoConfig => {
 
   return validateConfig({
     issuer,
-    clientId: env('SSO_CLIENT_ID') ?? 'hemia-console',
+    clientId: env('SSO_CLIENT_ID') ?? 'console',
     clientSecret: env('SSO_CLIENT_SECRET'),
-    audience: env('SSO_AUDIENCE') ?? 'hemia-console',
+    audience: env('SSO_AUDIENCE') ?? 'console-api',
     jwksUrl: env('SSO_JWKS_URL') ?? `${issuer}/.well-known/jwks.json`,
     authorizationUrl:
       env('SSO_AUTHORIZATION_URL') ?? `${issuer}/oauth/authorize`,
@@ -31,13 +31,19 @@ export default registerAs('sso', (): SsoConfig => {
     revocationUrl: env('SSO_REVOCATION_URL') ?? `${issuer}/oauth/revoke`,
     logoutUrl: env('SSO_LOGOUT_URL') ?? `${issuer}/oauth/logout`,
     redirectUri:
-      env('SSO_REDIRECT_URI') ?? 'http://localhost:3001/auth/callback',
-    frontendUrl: env('SSO_FRONTEND_URL') ?? 'http://localhost:3000',
+      env('SSO_REDIRECT_URI') ?? 'http://localhost:3016/auth/callback',
+    frontendUrl: env('SSO_FRONTEND_URL') ?? 'http://localhost:5176',
     scope:
       env('SSO_SCOPE') ??
       `openid profile email offline_access ${productCode}.access`,
+    authorize: (claims) =>
+      typeof claims.scope === 'string' &&
+      claims.scope.split(/\s+/).includes('console.access') &&
+      !claims.scope.split(/\s+/).includes('console.disabled'),
+    productCode,
     cookieName: env('SSO_COOKIE_NAME') ?? `${productCode}_session`,
     sessionTtlSeconds: Number(env('SSO_SESSION_TTL_SECONDS') ?? 604800),
+    requireDistributedRefreshLock: true,
     cookieSecure:
       process.env.SSO_COOKIE_SECURE === 'true' ||
       process.env.NODE_ENV === 'production',

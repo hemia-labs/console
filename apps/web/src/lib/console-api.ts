@@ -4,14 +4,7 @@ import {
   type ConsoleApiRequestOptions,
 } from "@/lib/console-api.types";
 
-const DEFAULT_CONSOLE_API_BASE_URL = "http://localhost:3016";
-
-function getConsoleApiBaseUrl() {
-  return (
-    process.env.NEXT_PUBLIC_CONSOLE_API_BASE_URL?.replace(/\/+$/, "") ??
-    DEFAULT_CONSOLE_API_BASE_URL
-  );
-}
+import { getConsoleApiBaseUrl, notifySessionFailure } from "@/lib/console-auth";
 
 function appendQuery(url: URL, query?: ConsoleApiQuery) {
   if (!query) {
@@ -87,16 +80,14 @@ async function request<T>(
   body?: unknown,
   options: ConsoleApiRequestOptions = {}
 ): Promise<T> {
-  const { authToken, headers, query, ...init } = options;
+  const { headers, query, ...init } = options;
   const requestHeaders = new Headers(headers);
 
   if (!requestHeaders.has("Accept")) {
     requestHeaders.set("Accept", "application/json");
   }
 
-  if (authToken) {
-    requestHeaders.set("Authorization", `Bearer ${authToken}`);
-  }
+  requestHeaders.delete("Authorization");
 
   const hasBody = body !== undefined;
   if (hasBody && !requestHeaders.has("Content-Type")) {
@@ -121,7 +112,16 @@ async function request<T>(
     });
   }
 
-  const payload = await parseResponse(response);
+  if (!response.ok) notifySessionFailure(response.status);
+  let payload: unknown;
+  try {
+    payload = await parseResponse(response);
+  } catch {
+    throw new ConsoleApiError({
+      message: "Console API devolvió una respuesta inválida.",
+      status: response.ok ? 503 : response.status,
+    });
+  }
 
   if (!response.ok) {
     const { code, details, message } = readErrorPayload(payload);
@@ -129,7 +129,8 @@ async function request<T>(
     throw new ConsoleApiError({
       code,
       details,
-      message: message ?? `Console API respondio con estado ${response.status}.`,
+      message:
+        message ?? `Console API respondio con estado ${response.status}.`,
       status: response.status,
     });
   }

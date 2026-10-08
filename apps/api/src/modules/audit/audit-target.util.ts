@@ -13,10 +13,13 @@ const ID_PATTERN =
 export const getAuditTarget = (request: Request): AuditTarget => {
   const route = (request.originalUrl ?? request.url ?? '').split('?')[0];
   const segments = route.split('/').filter(Boolean);
-  const identityAccessIndex = segments.indexOf('identity-access');
+  const namespaceIndex = segments.findIndex((segment) =>
+    ['access', 'identity-access'].includes(segment),
+  );
+  const namespace = namespaceIndex >= 0 ? segments[namespaceIndex] : undefined;
   const resourceSegments =
-    identityAccessIndex >= 0 ? segments.slice(identityAccessIndex + 1) : segments;
-  const resource = resourceSegments[0] ?? 'identity-access';
+    namespaceIndex >= 0 ? segments.slice(namespaceIndex + 1) : segments;
+  const resource = resourceSegments[0] ?? namespace ?? 'unknown';
   const normalizedRoute = resourceSegments
     .map((segment) => (isResourceId(segment) ? ':id' : segment))
     .join('.');

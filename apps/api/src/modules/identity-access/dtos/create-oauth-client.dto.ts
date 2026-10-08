@@ -1,3 +1,11 @@
+import { Type } from 'class-transformer';
+import {
+  ArrayMinSize,
+  ArrayMaxSize,
+  ArrayUnique,
+  ValidateNested,
+} from 'class-validator';
+import { OAuthClientDestinationDto } from './oauth-client-destination.dto';
 import {
   IsArray,
   IsBoolean,
@@ -10,6 +18,20 @@ import { OAuthClientStatus } from '../types/oauth-client-status';
 import { OAuthClientType } from '../types/oauth-client-type';
 
 export class CreateOAuthClientDto {
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(32)
+  @ArrayUnique(
+    (destination: OAuthClientDestinationDto) => destination?.resource,
+  )
+  @ArrayUnique(
+    (destination: OAuthClientDestinationDto) => destination?.audience,
+  )
+  @ValidateNested({ each: true })
+  @Type(() => OAuthClientDestinationDto)
+  serviceDestinations?: OAuthClientDestinationDto[] | null;
+
   @IsString({ message: 'El clientId debe ser una cadena de texto' })
   clientId: string;
 

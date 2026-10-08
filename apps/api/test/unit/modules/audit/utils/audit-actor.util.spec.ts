@@ -1,6 +1,16 @@
 import { extractAuditActor } from 'src/modules/audit/utils/audit-actor.util';
 
 describe('extractAuditActor', () => {
+  it('uses the validated SSO subject ahead of spoofed browser headers', () => {
+    expect(
+      extractAuditActor({
+        user: { sub: 'validated-user' },
+        ssoAuth: { cookie: 'opaque-session' },
+        headers: { authorization: `Bearer ${jwt({ sub: 'spoofed-user' })}` },
+      } as never),
+    ).toEqual({ actorSubject: 'validated-user', actorSource: 'cookie' });
+  });
+
   it('extracts sub from bearer JWT without verifying signature', () => {
     const token = jwt({ sub: 'user-sub' });
 
@@ -40,12 +50,7 @@ describe('extractAuditActor', () => {
 });
 
 const jwt = (payload: Record<string, unknown>): string =>
-  [
-    encode({ alg: 'none', typ: 'JWT' }),
-    encode(payload),
-    '',
-  ].join('.');
+  [encode({ alg: 'none', typ: 'JWT' }), encode(payload), ''].join('.');
 
 const encode = (value: Record<string, unknown>): string =>
-  Buffer.from(JSON.stringify(value))
-    .toString('base64url');
+  Buffer.from(JSON.stringify(value)).toString('base64url');

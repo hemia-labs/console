@@ -1,18 +1,18 @@
 "use client";
 
-import { Filter, Search } from "lucide-react";
+import { Filter, RefreshCw } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 
 import { ErrorState } from "@/components/error-state";
+import { Button } from "@/components/zuno/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+} from "@/components/zuno/dropdown-menu";
+import { SearchInput } from "@/components/zuno/search-input";
 import { apiErrorMessage } from "@/features/identity-access/components/identity-api-error";
 import {
   deleteOAuthClient,
@@ -36,17 +36,20 @@ const statusLabels: Record<OAuthClientStatus, string> = {
 
 export function OAuthClientsClient({
   initialError,
+  onRefresh,
   clients,
   locale,
 }: {
   initialError?: string | null;
+  onRefresh: () => void;
   clients: IdentityOAuthClient[];
   locale: string;
 }) {
-  const router = useRouter();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<OAuthClientStatus | "">("");
-  const [actionError, setActionError] = useState<string | null>(initialError ?? null);
+  const [actionError, setActionError] = useState<string | null>(
+    initialError ?? null
+  );
   const [pendingClientId, setPendingClientId] = useState<string | null>(null);
   const [secret, setSecret] = useState<OneTimeOAuthSecret | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -57,7 +60,7 @@ export function OAuthClientsClient({
     return clients.filter((client) => {
       const matchesStatus = status ? client.status === status : true;
       const matchesSearch = normalizedSearch
-        ? [client.clientId, client.audience].some((value) =>
+        ? [client.clientId, client.audience, ...(client.serviceDestinations ?? []).flatMap((destination) => [destination.audience, destination.resource, ...destination.scopes])].some((value) =>
             String(value ?? "")
               .toLowerCase()
               .includes(normalizedSearch)
@@ -68,11 +71,22 @@ export function OAuthClientsClient({
     });
   }, [clients, search, status]);
 
-  function refresh() {
-    startTransition(() => router.refresh());
+  function clearFilters() {
+    setSearch("");
+    setStatus("");
   }
 
-  async function runAction(client: IdentityOAuthClient, action: () => Promise<unknown>) {
+  function refresh() {
+    startTransition(() => {
+      setActionError(null);
+      onRefresh();
+    });
+  }
+
+  async function runAction(
+    client: IdentityOAuthClient,
+    action: () => Promise<unknown>
+  ) {
     const id = oauthClientId(client);
     setPendingClientId(id);
     setActionError(null);
@@ -102,74 +116,110 @@ export function OAuthClientsClient({
 
   return (
     <div className="space-y-5">
-      <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_14rem]">
-          <label className="relative block">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              className="h-12 bg-card pl-10"
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Buscar por client ID o audience"
-              value={search}
-            />
-          </label>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              className="inline-flex h-12 w-full items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 text-sm font-medium outline-none transition-all hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
-              disabled={isPending}
-              type="button"
-            >
-              <span className="flex min-w-0 items-center gap-2">
-                <Filter className="size-4 text-muted-foreground" />
-                <span className="truncate">{status ? statusLabels[status] : "Todos los estados"}</span>
-              </span>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
-              <DropdownMenuRadioGroup
-                onValueChange={(value) => setStatus(value as OAuthClientStatus | "")}
-                value={status}
-              >
-                <DropdownMenuRadioItem className="min-h-12 cursor-pointer px-2" value="">
-                  Todos los estados
-                </DropdownMenuRadioItem>
-                {Object.entries(statusLabels).map(([value, label]) => (
-                  <DropdownMenuRadioItem
-                    className="min-h-12 cursor-pointer px-2"
-                    key={value}
-                    value={value}
+      {secret ? (
+        <OneTimeSecretPanel onDismiss={() => setSecret(null)} secret={secret} />
+      ) : null}
+
+      <section aria-label="Clientes OAuth" className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+        <div className="flex flex-col gap-3 p-5 lg:flex-row lg:items-center lg:justify-between">
+          <span aria-live="polite" className="text-sm text-muted-foreground">
+            {clients.length} {clients.length === 1 ? "cliente OAuth" : "clientes OAuth"}
+          </span>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="w-full sm:w-72">
+              <SearchInput
+                className="h-10 bg-card"
+                onChange={(event) => setSearch(event.target.value)}
+                onClear={() => setSearch("")}
+                aria-label="Buscar clientes OAuth"
+                placeholder="Buscar por cliente, audiencia, destino o scope"
+                value={search}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={<Button className="h-10 flex-1 px-4 font-semibold sm:flex-none" variant="outline" />}
+                  aria-label="Filtrar por estado"
+                  disabled={isPending}
+                  type="button"
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <Filter className="size-4 text-muted-foreground" />
+                    <span className="truncate">
+                      {status ? statusLabels[status] : "Filtros"}
+                    </span>
+                  </span>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56">
+                  <DropdownMenuRadioGroup
+                    aria-label="Estado del cliente OAuth"
+                    onValueChange={(value) =>
+                      setStatus(value as OAuthClientStatus | "")
+                    }
+                    value={status}
                   >
-                    {label}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                    <DropdownMenuRadioItem
+                      className="min-h-10 cursor-pointer px-2"
+                      value=""
+                    >
+                      Todos los estados
+                    </DropdownMenuRadioItem>
+                    {Object.entries(statusLabels).map(([value, label]) => (
+                      <DropdownMenuRadioItem
+                        className="min-h-10 cursor-pointer px-2"
+                        key={value}
+                        value={value}
+                      >
+                        {label}
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button aria-label="Recargar clientes OAuth" className="size-10" disabled={isPending || pendingClientId !== null} onClick={refresh} size="icon" variant="ghost">
+                <RefreshCw className="size-4" />
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {secret ? <OneTimeSecretPanel onDismiss={() => setSecret(null)} secret={secret} /> : null}
+        <div className="border-t border-border">
+          {actionError ? (
+            <ErrorState
+              actionLabel="Reintentar"
+              error={new Error(actionError)}
+              onRetry={refresh}
+              title="No se pudo cargar OAuth clients"
+            />
+          ) : null}
 
-      {actionError ? (
-        <ErrorState
-          actionLabel="Reintentar"
-          error={new Error(actionError)}
-          onRetry={refresh}
-          title="No se pudo cargar OAuth clients"
-        />
-      ) : null}
-
-      {!actionError ? (
-        <OAuthClientsTable
-          clients={filteredClients}
-          locale={locale}
-          onDelete={(client) => runAction(client, () => deleteOAuthClient(oauthClientId(client)))}
-          onRotateSecret={handleRotateSecret}
-          onStatus={(client, nextStatus) =>
-            runAction(client, () => updateOAuthClient(oauthClientId(client), { status: nextStatus }))
-          }
-          pendingClientId={pendingClientId}
-        />
-      ) : null}
+          {!actionError ? (
+            <OAuthClientsTable
+              clients={filteredClients}
+              isFiltered={Boolean(search.trim() || status)}
+              onClearFilters={clearFilters}
+              locale={locale}
+              onDelete={(client) =>
+                runAction(client, () => deleteOAuthClient(oauthClientId(client)))
+              }
+              onRotateSecret={handleRotateSecret}
+              onStatus={(client, nextStatus) =>
+                runAction(client, () =>
+                  updateOAuthClient(oauthClientId(client), { status: nextStatus })
+                )
+              }
+              pendingClientId={pendingClientId}
+            />
+          ) : null}
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-4 text-sm text-muted-foreground">
+          <span aria-live="polite">{filteredClients.length} de {clients.length} clientes</span>
+          {search.trim() || status ? (
+            <Button className="h-10" onClick={clearFilters} variant="ghost">Limpiar filtros</Button>
+          ) : <span>Todos los estados</span>}
+        </div>
+      </section>
     </div>
   );
 }

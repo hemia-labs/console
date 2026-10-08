@@ -49,7 +49,10 @@ export class AuditInterceptor implements NestInterceptor {
   private shouldAudit(request: Request): boolean {
     return (
       ['POST', 'PATCH', 'DELETE'].includes(request.method) &&
-      (request.originalUrl ?? request.url ?? '').startsWith('/identity-access')
+      ['/identity-access', '/access'].some((prefix) => {
+        const url = request.originalUrl ?? request.url ?? '';
+        return url === prefix || url.startsWith(`${prefix}/`);
+      })
     );
   }
 

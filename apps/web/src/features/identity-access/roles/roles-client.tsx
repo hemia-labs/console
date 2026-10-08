@@ -6,15 +6,15 @@ import { useMemo, useState, useTransition } from "react";
 
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/zuno/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+} from "@/components/zuno/dropdown-menu";
+import { Input } from "@/components/zuno/input";
 import {
   Table,
   TableBody,
@@ -97,17 +97,17 @@ function RoleForm({
       <div className="mt-5 grid gap-4 md:grid-cols-2">
         <label className="grid gap-2 text-sm font-medium">
           Nombre
-          <Input className="h-12 bg-card" onChange={(e) => update("name", e.target.value)} required value={value.name} />
+          <Input className="h-8 bg-card" onChange={(e) => update("name", e.target.value)} required value={value.name} />
         </label>
         <label className="grid gap-2 text-sm font-medium">
           Key
-          <Input className="h-12 bg-card" onChange={(e) => update("key", e.target.value)} value={value.key ?? ""} />
+          <Input className="h-8 bg-card" onChange={(e) => update("key", e.target.value)} value={value.key ?? ""} />
         </label>
         <label className="grid gap-2 text-sm font-medium">
           Scope
-          <Input className="h-12 bg-card" onChange={(e) => update("scope", e.target.value)} value={value.scope ?? ""} />
+          <Input className="h-8 bg-card" onChange={(e) => update("scope", e.target.value)} value={value.scope ?? ""} />
         </label>
-        <label className="flex min-h-12 items-center gap-3 text-sm font-medium">
+        <label className="flex min-h-8 items-center gap-3 text-sm font-medium">
           <input checked={Boolean(value.isSystem)} className="size-4" onChange={(e) => update("isSystem", e.target.checked)} type="checkbox" />
           Rol de sistema
         </label>
@@ -118,8 +118,8 @@ function RoleForm({
       </div>
       {error ? <p className="mt-4 text-sm font-medium text-destructive">{error}</p> : null}
       <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <Button className="h-12" disabled={pending} onClick={onCancel} type="button" variant="outline">Cancelar</Button>
-        <Button className="h-12" disabled={pending} type="submit">Guardar</Button>
+        <Button className="h-8" disabled={pending} onClick={onCancel} type="button" variant="outline">Cancelar</Button>
+        <Button className="h-8" disabled={pending} type="submit">Guardar</Button>
       </div>
     </form>
   );
@@ -145,19 +145,19 @@ function AssignmentPanel({
       <p className="mt-1 text-sm text-muted-foreground">Operacion minima hasta tener selectores de usuarios y permisos.</p>
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
         <form className="grid gap-3" onSubmit={(e) => { e.preventDefault(); onSubmit("assignPermission", { permissionId, roleId: roleIdValue }); }}>
-          <Input className="h-12 bg-card" onChange={(e) => setRoleIdValue(e.target.value)} placeholder="Role ID" required value={roleIdValue} />
-          <Input className="h-12 bg-card" onChange={(e) => setPermissionId(e.target.value)} placeholder="Permission ID" required value={permissionId} />
+          <Input className="h-8 bg-card" onChange={(e) => setRoleIdValue(e.target.value)} placeholder="Role ID" required value={roleIdValue} />
+          <Input className="h-8 bg-card" onChange={(e) => setPermissionId(e.target.value)} placeholder="Permission ID" required value={permissionId} />
           <div className="flex flex-wrap gap-2">
-            <Button className="h-12" disabled={pending} type="submit">Asignar permiso</Button>
-            <Button className="h-12" disabled={pending} onClick={() => { if (window.confirm("Quitar permiso del rol?")) onSubmit("removePermission", { permissionId, roleId: roleIdValue }); }} type="button" variant="outline">Quitar permiso</Button>
+            <Button className="h-8" disabled={pending} type="submit">Asignar permiso</Button>
+            <Button className="h-8" disabled={pending} onClick={() => { if (window.confirm("Quitar permiso del rol?")) onSubmit("removePermission", { permissionId, roleId: roleIdValue }); }} type="button" variant="outline">Quitar permiso</Button>
           </div>
         </form>
         <form className="grid gap-3" onSubmit={(e) => { e.preventDefault(); onSubmit("assignUser", { roleId: userRoleId, userId }); }}>
-          <Input className="h-12 bg-card" onChange={(e) => setUserId(e.target.value)} placeholder="User ID" required value={userId} />
-          <Input className="h-12 bg-card" onChange={(e) => setUserRoleId(e.target.value)} placeholder="Role ID" required value={userRoleId} />
+          <Input className="h-8 bg-card" onChange={(e) => setUserId(e.target.value)} placeholder="User ID" required value={userId} />
+          <Input className="h-8 bg-card" onChange={(e) => setUserRoleId(e.target.value)} placeholder="Role ID" required value={userRoleId} />
           <div className="flex flex-wrap gap-2">
-            <Button className="h-12" disabled={pending} type="submit">Asignar rol</Button>
-            <Button className="h-12" disabled={pending} onClick={() => { if (window.confirm("Quitar rol del usuario?")) onSubmit("removeUser", { roleId: userRoleId, userId }); }} type="button" variant="outline">Quitar rol</Button>
+            <Button className="h-8" disabled={pending} type="submit">Asignar rol</Button>
+            <Button className="h-8" disabled={pending} onClick={() => { if (window.confirm("Quitar rol del usuario?")) onSubmit("removeUser", { roleId: userRoleId, userId }); }} type="button" variant="outline">Quitar rol</Button>
           </div>
         </form>
       </div>
@@ -248,9 +248,9 @@ export function RolesClient({
         <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
           <label className="relative block">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input className="h-12 bg-card pl-10" onChange={(e) => setSearch(e.target.value)} placeholder="Buscar roles" value={search} />
+            <Input className="h-8 bg-card pl-10" onChange={(e) => setSearch(e.target.value)} placeholder="Buscar roles" value={search} />
           </label>
-          <Button className="h-12" onClick={() => { setForm({ mode: "create" }); setFormError(null); }} type="button">
+          <Button className="h-8" onClick={() => { setForm({ mode: "create" }); setFormError(null); }} type="button">
             <Plus className="size-4" />
             Crear rol
           </Button>
@@ -287,15 +287,15 @@ export function RolesClient({
                       <TableCell className="px-4 py-3 text-sm">{role.isSystem ? "Si" : "No"}</TableCell>
                       <TableCell className="px-4 py-3 text-right">
                         <DropdownMenu>
-                          <DropdownMenuTrigger aria-label="Acciones de rol" className="inline-flex size-12 items-center justify-center rounded-md border border-border bg-background outline-none hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50" disabled={pendingId === id || !id} type="button">
+                          <DropdownMenuTrigger aria-label="Acciones de rol" className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-background outline-none hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50" disabled={pendingId === id || !id} type="button">
                             <MoreHorizontal className="size-4" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-52">
-                            <DropdownMenuItem className="min-h-12 cursor-pointer gap-2 px-2" onClick={() => { setForm({ mode: "edit", role }); setFormError(null); }}>
+                            <DropdownMenuItem className="min-h-8 cursor-pointer gap-2 px-2" onClick={() => { setForm({ mode: "edit", role }); setFormError(null); }}>
                               <Pencil className="size-4" /> Editar
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="min-h-12 cursor-pointer gap-2 px-2" onClick={() => { if (window.confirm("Esta accion eliminara el rol. Continuar?")) runAction(id, () => deleteRole(id)); }} variant="destructive">
+                            <DropdownMenuItem className="min-h-8 cursor-pointer gap-2 px-2" onClick={() => { if (window.confirm("Esta accion eliminara el rol. Continuar?")) runAction(id, () => deleteRole(id)); }} variant="destructive">
                               <Trash2 className="size-4" /> Eliminar
                             </DropdownMenuItem>
                           </DropdownMenuContent>

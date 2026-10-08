@@ -35,3 +35,14 @@ export function parseLines(value: string) {
 export function formatLines(values?: string[]) {
   return values?.join("\n") ?? "";
 }
+
+export function addOAuthScope(scopes: string[], value: string) {
+  const scope = value.trim();
+  if (!scope || /\s/.test(scope)) {
+    return { scopes, error: "Escribe un scope sin espacios." };
+  }
+  if (scopes.includes(scope)) {
+    return { scopes, error: "Este permiso ya está seleccionado." };
+  }
+  return { scopes: [...scopes, scope], error: null };
+}

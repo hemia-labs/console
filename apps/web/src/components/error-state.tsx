@@ -1,6 +1,6 @@
 import { AlertTriangle } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/zuno/button";
 import { ConsoleApiError } from "@/lib/console-api.types";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +38,7 @@ export function ErrorState({
       role="alert"
     >
       <div className="flex max-w-md flex-col items-center gap-3">
-        <span className="grid size-12 place-items-center rounded-full bg-red-50 text-red-600">
+        <span className="grid size-12 place-items-center rounded-full bg-zuno-error-surface text-zuno-error">
           <AlertTriangle className="size-5" />
         </span>
         <div>
@@ -46,7 +46,7 @@ export function ErrorState({
           <p className="mt-1 text-sm text-muted-foreground">{messageFor(error)}</p>
         </div>
         {onRetry ? (
-          <Button className="h-12" onClick={onRetry} type="button" variant="outline">
+          <Button className="h-8" onClick={onRetry} type="button" variant="outline">
             {actionLabel ?? "Reintentar"}
           </Button>
         ) : null}

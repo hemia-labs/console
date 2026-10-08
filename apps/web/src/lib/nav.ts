@@ -2,14 +2,19 @@ import type { LucideIcon } from "lucide-react";
 import { isLocale } from "@/i18n/config";
 import {
   Activity,
+  BadgeCheck,
   BriefcaseBusiness,
+  Building2,
   FolderKanban,
   Gauge,
   KeyRound,
   LayoutDashboard,
+  MailPlus,
+  Package,
   Settings,
   ShieldUser,
   Users,
+  UsersRound,
 } from "lucide-react";
 
 export type NavItem = {
@@ -29,27 +34,64 @@ export const nav: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
-    label: "Identity & Access",
-    description: "Usuarios, permisos, cuentas y clientes de identidad",
+    label: "Identity",
+    description: "Usuarios y clientes de identidad",
     icon: ShieldUser,
     children: [
       {
-        href: "/identity-access/users",
+        href: "/identity/users",
         label: "Usuarios",
         description: "Administracion de usuarios",
         icon: Users,
       },
       {
-        href: "/identity-access/accounts",
-        label: "Cuentas",
-        description: "Cuentas locales conectadas a Hemia ID",
-        icon: KeyRound,
-      },
-      {
-        href: "/identity-access/oauth-clients",
+        href: "/identity/oauth-clients",
         label: "OAuth clients",
         description: "Clientes OAuth y secretos one-time",
         icon: BriefcaseBusiness,
+      },
+    ],
+  },
+  {
+    label: "Access",
+    description: "Administracion de organizaciones, membresias y permisos",
+    icon: BadgeCheck,
+    children: [
+      {
+        href: "/access/organizations",
+        label: "Organizations",
+        description: "Administracion de organizations",
+        icon: Building2,
+      },
+      {
+        href: "/access/memberships",
+        label: "Memberships",
+        description: "Administracion de memberships",
+        icon: UsersRound,
+      },
+      {
+        href: "/access/system-role-catalogs",
+        label: "Catálogos de sistema",
+        description: "Publicación de catálogos de roles",
+        icon: KeyRound,
+      },
+      {
+        href: "/access/roles",
+        label: "Roles y permisos",
+        description: "Roles y permisos de organizations",
+        icon: KeyRound,
+      },
+      {
+        href: "/access/products",
+        label: "Products",
+        description: "Productos y accesos habilitados",
+        icon: Package,
+      },
+      {
+        href: "/access/invitations",
+        label: "Invitations",
+        description: "Invitaciones de acceso",
+        icon: MailPlus,
       },
     ],
   },
@@ -97,13 +139,21 @@ export function localizedHref(locale: string, href: string) {
 }
 
 function flatten(items: NavItem[]): NavItem[] {
-  return items.flatMap((item) => [item, ...(item.children ? flatten(item.children) : [])]);
+  return items.flatMap((item) => [
+    item,
+    ...(item.children ? flatten(item.children) : []),
+  ]);
 }
 
-function flattenWithParents(items: NavItem[], parents: NavItem[] = []): Array<{ item: NavItem; parents: NavItem[] }> {
+function flattenWithParents(
+  items: NavItem[],
+  parents: NavItem[] = [],
+): Array<{ item: NavItem; parents: NavItem[] }> {
   return items.flatMap((item) => [
     { item, parents },
-    ...(item.children ? flattenWithParents(item.children, [...parents, item]) : []),
+    ...(item.children
+      ? flattenWithParents(item.children, [...parents, item])
+      : []),
   ]);
 }
 
@@ -115,7 +165,7 @@ function matchFor(pathname: string) {
         ? item.href === "/"
           ? pathname === "/"
           : pathname === item.href || pathname.startsWith(`${item.href}/`)
-        : false
+        : false,
     )
     .sort((a, b) => (b.href?.length ?? 0) - (a.href?.length ?? 0))[0];
 }
@@ -147,7 +197,7 @@ function matchedTrail(pathname: string) {
         ? item.href === "/"
           ? pathname === "/"
           : pathname === item.href || pathname.startsWith(`${item.href}/`)
-        : false
+        : false,
     )
     .sort((a, b) => (b.item.href?.length ?? 0) - (a.item.href?.length ?? 0))[0];
 }
@@ -157,10 +207,16 @@ export type BreadcrumbNavItem = {
   label: string;
 };
 
-export function breadcrumbsFor(pathname: string, locale: string): BreadcrumbNavItem[] {
+export function breadcrumbsFor(
+  pathname: string,
+  locale: string,
+  currentLabel?: string,
+): BreadcrumbNavItem[] {
   const currentPath = stripLocale(pathname);
   const match = matchedTrail(currentPath);
-  const items: BreadcrumbNavItem[] = [{ href: localizedHref(locale, "/"), label: "Hemia" }];
+  const items: BreadcrumbNavItem[] = [
+    { href: localizedHref(locale, "/"), label: "Hemia" },
+  ];
 
   if (!match) {
     return [...items, { label: "Hemia Console" }];
@@ -181,16 +237,33 @@ export function breadcrumbsFor(pathname: string, locale: string): BreadcrumbNavI
   });
 
   if (!isExact) {
-    const suffix = currentPath.slice(matchedHref.length).split("/").filter(Boolean);
-    const meaningfulSuffix = suffix.filter((segment) => segment !== "edit" || suffix.length === 1);
+    const suffix = currentPath
+      .slice(matchedHref.length)
+      .split("/")
+      .filter(Boolean);
+    const meaningfulSuffix = suffix.filter(
+      (segment) => segment !== "edit" || suffix.length === 1,
+    );
 
     if (meaningfulSuffix.includes("new")) {
       items.push({ label: titleFromSegment("new") });
     } else if (suffix.includes("edit")) {
+      if (match.item.href === "/identity/oauth-clients" && suffix.length > 1) {
+        items.push({
+          href: localizedHref(locale, `${matchedHref}/${suffix[0]}`),
+          label: currentLabel || "Detalle",
+        });
+      }
       items.push({ label: titleFromSegment("edit") });
     } else {
       const last = meaningfulSuffix.at(-1);
-      if (last) items.push({ label: titleFromSegment(last) });
+      if (last)
+        items.push({
+          label:
+            match.item.href === "/identity/oauth-clients"
+              ? currentLabel || "Detalle"
+              : titleFromSegment(last),
+        });
     }
   }
 

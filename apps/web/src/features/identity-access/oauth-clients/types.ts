@@ -4,7 +4,14 @@ export const oauthClientTypes = ["public", "confidential"] as const;
 export type OAuthClientStatus = (typeof oauthClientStatuses)[number];
 export type OAuthClientType = (typeof oauthClientTypes)[number];
 
+export type OAuthServiceDestination = {
+  resource: string;
+  audience: string;
+  scopes: string[];
+};
+
 export type IdentityOAuthClient = {
+  serviceDestinations?: OAuthServiceDestination[] | null;
   audience: string;
   clientId: string;
   createdAt?: string | null;
@@ -29,6 +36,7 @@ export type OAuthClientListQuery = {
 export type OAuthClientListField = "redirectUris" | "scopes" | "grantTypes" | "responseTypes";
 
 export type CreateOAuthClientPayload = {
+  serviceDestinations?: OAuthServiceDestination[] | null;
   audience: string;
   clientId: string;
   grantTypes?: string[];

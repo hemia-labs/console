@@ -10,7 +10,7 @@ export function TableActions({
   className?: string;
 }) {
   return (
-    <div className={cn("flex min-h-12 items-center justify-end gap-2", className)}>
+    <div className={cn("flex min-h-8 items-center justify-end gap-2", className)}>
       {children}
     </div>
   );

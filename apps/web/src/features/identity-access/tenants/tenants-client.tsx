@@ -6,15 +6,15 @@ import { useMemo, useState, useTransition } from "react";
 
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/zuno/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+} from "@/components/zuno/dropdown-menu";
+import { Input } from "@/components/zuno/input";
 import {
   Table,
   TableBody,
@@ -102,15 +102,15 @@ function TenantForm({
       <div className="mt-5 grid gap-4 md:grid-cols-2">
         <label className="grid gap-2 text-sm font-medium">
           Nombre
-          <Input className="h-12 bg-card" onChange={(e) => update("name", e.target.value)} required value={value.name} />
+          <Input className="h-8 bg-card" onChange={(e) => update("name", e.target.value)} required value={value.name} />
         </label>
         <label className="grid gap-2 text-sm font-medium">
           Slug
-          <Input className="h-12 bg-card" onChange={(e) => update("slug", e.target.value)} required value={value.slug} />
+          <Input className="h-8 bg-card" onChange={(e) => update("slug", e.target.value)} required value={value.slug} />
         </label>
         <label className="grid gap-2 text-sm font-medium">
           Estado
-          <select className="h-12 rounded-md border border-input bg-card px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50" onChange={(e) => update("status", e.target.value as TenantStatus)} value={value.status}>
+          <select className="h-8 rounded-md border border-input bg-card px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50" onChange={(e) => update("status", e.target.value as TenantStatus)} value={value.status}>
             {tenantStatuses.map((status) => (
               <option key={status} value={status}>{status}</option>
             ))}
@@ -118,17 +118,17 @@ function TenantForm({
         </label>
         <label className="grid gap-2 text-sm font-medium">
           Plan
-          <Input className="h-12 bg-card" onChange={(e) => update("plan", e.target.value)} value={value.plan ?? ""} />
+          <Input className="h-8 bg-card" onChange={(e) => update("plan", e.target.value)} value={value.plan ?? ""} />
         </label>
         <label className="grid gap-2 text-sm font-medium md:col-span-2">
           Owner user ID
-          <Input className="h-12 bg-card" onChange={(e) => update("ownerUserId", e.target.value)} value={value.ownerUserId ?? ""} />
+          <Input className="h-8 bg-card" onChange={(e) => update("ownerUserId", e.target.value)} value={value.ownerUserId ?? ""} />
         </label>
       </div>
       {error ? <p className="mt-4 text-sm font-medium text-destructive">{error}</p> : null}
       <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <Button className="h-12" disabled={pending} onClick={onCancel} type="button" variant="outline">Cancelar</Button>
-        <Button className="h-12" disabled={pending} type="submit">Guardar</Button>
+        <Button className="h-8" disabled={pending} onClick={onCancel} type="button" variant="outline">Cancelar</Button>
+        <Button className="h-8" disabled={pending} type="submit">Guardar</Button>
       </div>
     </form>
   );
@@ -198,9 +198,9 @@ export function TenantsClient({
         <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
           <label className="relative block">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input className="h-12 bg-card pl-10" onChange={(e) => setSearch(e.target.value)} placeholder="Buscar tenants" value={search} />
+            <Input className="h-8 bg-card pl-10" onChange={(e) => setSearch(e.target.value)} placeholder="Buscar tenants" value={search} />
           </label>
-          <Button className="h-12" onClick={() => { setForm({ mode: "create" }); setFormError(null); }} type="button">
+          <Button className="h-8" onClick={() => { setForm({ mode: "create" }); setFormError(null); }} type="button">
             <Plus className="size-4" />
             Crear tenant
           </Button>
@@ -236,21 +236,21 @@ export function TenantsClient({
                       <TableCell className="px-4 py-3 text-sm text-muted-foreground">{tenantDate(tenant.updatedAt)}</TableCell>
                       <TableCell className="px-4 py-3 text-right">
                         <DropdownMenu>
-                          <DropdownMenuTrigger aria-label="Acciones de tenant" className="inline-flex size-12 items-center justify-center rounded-md border border-border bg-background outline-none hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50" disabled={pending || !id} type="button">
+                          <DropdownMenuTrigger aria-label="Acciones de tenant" className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-background outline-none hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50" disabled={pending || !id} type="button">
                             <MoreHorizontal className="size-4" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuItem className="min-h-12 cursor-pointer gap-2 px-2" onClick={() => { setForm({ mode: "edit", tenant }); setFormError(null); }}>
+                            <DropdownMenuItem className="min-h-8 cursor-pointer gap-2 px-2" onClick={() => { setForm({ mode: "edit", tenant }); setFormError(null); }}>
                               <Pencil className="size-4" /> Editar
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="min-h-12 cursor-pointer gap-2 px-2" onClick={() => runAction(id, () => updateTenantStatus(id, "active"))}>
+                            <DropdownMenuItem className="min-h-8 cursor-pointer gap-2 px-2" onClick={() => runAction(id, () => updateTenantStatus(id, "active"))}>
                               <CheckCircle2 className="size-4" /> Activar
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="min-h-12 cursor-pointer gap-2 px-2" onClick={() => runAction(id, () => updateTenantStatus(id, "suspended"))}>
+                            <DropdownMenuItem className="min-h-8 cursor-pointer gap-2 px-2" onClick={() => runAction(id, () => updateTenantStatus(id, "suspended"))}>
                               Suspender
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="min-h-12 cursor-pointer gap-2 px-2" onClick={() => { if (window.confirm("Esta accion eliminara el tenant. Continuar?")) runAction(id, () => deleteTenant(id)); }} variant="destructive">
+                            <DropdownMenuItem className="min-h-8 cursor-pointer gap-2 px-2" onClick={() => { if (window.confirm("Esta accion eliminara el tenant. Continuar?")) runAction(id, () => deleteTenant(id)); }} variant="destructive">
                               <Trash2 className="size-4" /> Eliminar
                             </DropdownMenuItem>
                           </DropdownMenuContent>

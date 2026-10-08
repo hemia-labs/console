@@ -26,7 +26,7 @@ export function OAuthClientCreateClient({ cancelHref }: { cancelHref: string }) 
           clientId: response.clientId ?? payload.clientId,
           clientSecret: response.clientSecret,
           status: response.status ?? payload.status,
-          title: "Secreto creado",
+          title: "Cliente OAuth creado",
           type: response.type ?? payload.type,
         });
       }

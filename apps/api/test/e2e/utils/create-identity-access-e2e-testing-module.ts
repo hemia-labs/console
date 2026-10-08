@@ -1,3 +1,6 @@
+import { ConsoleAuthorizationService } from '../../../src/modules/auth/console-authorization.service';
+import type { ExecutionContext } from '@nestjs/common';
+import type { Request } from 'express';
 import { ConfigModule } from '@nestjs/config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
@@ -34,6 +37,8 @@ export const createIdentityAccessE2eTestingModule = () =>
       },
     ],
   })
+    .overrideProvider(ConsoleAuthorizationService)
+    .useValue({ authorize: jest.fn().mockResolvedValue(undefined) })
     .overrideProvider(REDIS)
     .useValue({
       del: jest.fn().mockResolvedValue(1),
@@ -43,8 +48,12 @@ export const createIdentityAccessE2eTestingModule = () =>
     })
     .overrideProvider(SsoAuthGuard)
     .useValue({
-      canActivate: jest.fn((context) => {
-        const request = context.switchToHttp().getRequest();
+      canActivate: jest.fn((context: ExecutionContext) => {
+        const request = context
+          .switchToHttp()
+          .getRequest<
+            Request & { user?: { authorization?: string; cookie?: string } }
+          >();
         request.user = {
           authorization: request.headers.authorization,
           cookie: request.headers.cookie,

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Card, CardContent } from "@/components/zuno/card";
 import { cn } from "@/lib/utils";
 
 export function StatCard({
@@ -12,18 +13,18 @@ export function StatCard({
   tone?: "blue" | "violet";
   icon?: ReactNode;
 }) {
+  const iconTone = {
+    blue: "bg-zuno-info-surface text-zuno-info",
+    violet: "bg-muted text-primary",
+  }[tone];
+
   return (
-    <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-      <div
-        className={cn(
-          "grid size-12 place-items-center rounded-full",
-          tone === "violet" ? "bg-violet-50 text-violet-600" : "bg-secondary text-primary"
-        )}
-      >
-        {icon}
-      </div>
-      <p className="mt-4 truncate text-sm font-bold">{label}</p>
-      <p className="mt-2 text-2xl font-bold">{value}</p>
-    </div>
+    <Card className="rounded-2xl border-surface-line shadow-sm">
+      <CardContent className="p-6">
+        <div className={cn("grid size-12 place-items-center rounded-full", iconTone)}>{icon}</div>
+        <p className="mt-4 truncate text-sm font-bold text-heading">{label}</p>
+        <p className="mt-2 font-display text-5xl font-semibold leading-none text-heading">{value}</p>
+      </CardContent>
+    </Card>
   );
 }

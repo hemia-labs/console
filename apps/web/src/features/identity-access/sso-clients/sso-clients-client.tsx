@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/zuno/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,8 +15,8 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+} from "@/components/zuno/dropdown-menu";
+import { Input } from "@/components/zuno/input";
 import {
   Table,
   TableBody,
@@ -126,7 +126,7 @@ function SsoClientForm({
         <label className="grid gap-2 text-sm font-medium">
           Client ID
           <Input
-            className="h-12 bg-card"
+            className="h-8 bg-card"
             onChange={(event) => update("clientId", event.target.value)}
             required
             value={value.clientId}
@@ -135,7 +135,7 @@ function SsoClientForm({
         <label className="grid gap-2 text-sm font-medium">
           Nombre
           <Input
-            className="h-12 bg-card"
+            className="h-8 bg-card"
             onChange={(event) => update("name", event.target.value)}
             required
             value={value.name}
@@ -144,7 +144,7 @@ function SsoClientForm({
         <label className="grid gap-2 text-sm font-medium">
           Estado
           <select
-            className="h-12 rounded-md border border-input bg-card px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="h-8 rounded-md border border-input bg-card px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
             onChange={(event) => update("status", event.target.value as SsoClientStatus)}
             value={value.status}
           >
@@ -177,10 +177,10 @@ function SsoClientForm({
       </div>
       {error ? <p className="mt-4 text-sm font-medium text-destructive">{error}</p> : null}
       <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <Button className="h-12" disabled={pending} onClick={onCancel} type="button" variant="outline">
+        <Button className="h-8" disabled={pending} onClick={onCancel} type="button" variant="outline">
           Cancelar
         </Button>
-        <Button className="h-12" disabled={pending} type="submit">
+        <Button className="h-8" disabled={pending} type="submit">
           Guardar
         </Button>
       </div>
@@ -265,7 +265,7 @@ export function SsoClientsClient({
           <label className="relative block">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              className="h-12 bg-card pl-10"
+              className="h-8 bg-card pl-10"
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Buscar por client ID, nombre o URL"
               value={search}
@@ -273,7 +273,7 @@ export function SsoClientsClient({
           </label>
           <DropdownMenu>
             <DropdownMenuTrigger
-              className="inline-flex h-12 w-full items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 text-sm font-medium outline-none transition-all hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
+              className="inline-flex h-8 w-full items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 text-sm font-medium outline-none transition-all hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
               disabled={isPending}
               type="button"
             >
@@ -287,11 +287,11 @@ export function SsoClientsClient({
                 onValueChange={(value) => setStatus(value as SsoClientStatus | "")}
                 value={status}
               >
-                <DropdownMenuRadioItem className="min-h-12 cursor-pointer px-2" value="">
+                <DropdownMenuRadioItem className="min-h-8 cursor-pointer px-2" value="">
                   Todos los estados
                 </DropdownMenuRadioItem>
                 {ssoClientStatuses.map((item) => (
-                  <DropdownMenuRadioItem className="min-h-12 cursor-pointer px-2" key={item} value={item}>
+                  <DropdownMenuRadioItem className="min-h-8 cursor-pointer px-2" key={item} value={item}>
                     {statusLabels[item]}
                   </DropdownMenuRadioItem>
                 ))}
@@ -299,7 +299,7 @@ export function SsoClientsClient({
             </DropdownMenuContent>
           </DropdownMenu>
           <Button
-            className="h-12"
+            className="h-8"
             onClick={() => {
               setForm({ mode: "create" });
               setFormError(null);
@@ -376,7 +376,7 @@ export function SsoClientsClient({
                         <DropdownMenu>
                           <DropdownMenuTrigger
                             aria-label="Acciones de SSO client"
-                            className="inline-flex size-12 shrink-0 items-center justify-center rounded-md border border-border bg-background text-sm font-medium outline-none transition-colors hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
+                            className="inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-background text-sm font-medium outline-none transition-colors hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
                             disabled={pending || !id}
                             type="button"
                           >
@@ -384,7 +384,7 @@ export function SsoClientsClient({
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-56">
                             <DropdownMenuItem
-                              className="min-h-12 cursor-pointer gap-2 px-2"
+                              className="min-h-8 cursor-pointer gap-2 px-2"
                               onClick={() => {
                                 setForm({ client, mode: "edit" });
                                 setFormError(null);
@@ -396,7 +396,7 @@ export function SsoClientsClient({
                             <DropdownMenuSeparator />
                             {currentStatus === "active" ? (
                               <DropdownMenuItem
-                                className="min-h-12 cursor-pointer gap-2 px-2"
+                                className="min-h-8 cursor-pointer gap-2 px-2"
                                 onClick={() => {
                                   if (window.confirm("Esta accion suspendera el SSO client. Continuar?")) {
                                     runAction(client, () => updateSsoClient(id, { status: "suspended" }));
@@ -408,7 +408,7 @@ export function SsoClientsClient({
                               </DropdownMenuItem>
                             ) : (
                               <DropdownMenuItem
-                                className="min-h-12 cursor-pointer gap-2 px-2"
+                                className="min-h-8 cursor-pointer gap-2 px-2"
                                 onClick={() => {
                                   if (window.confirm("Esta accion activara el SSO client. Continuar?")) {
                                     runAction(client, () => updateSsoClient(id, { status: "active" }));
@@ -421,7 +421,7 @@ export function SsoClientsClient({
                             )}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              className="min-h-12 cursor-pointer gap-2 px-2"
+                              className="min-h-8 cursor-pointer gap-2 px-2"
                               onClick={() => {
                                 if (window.confirm("Esta accion eliminara el SSO client. Continuar?")) {
                                   runAction(client, () => deleteSsoClient(id));

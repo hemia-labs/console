@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { ErrorState } from "@/components/error-state";
@@ -31,21 +30,27 @@ type FormState =
 
 export function UsersClient({
   initialError,
+  onRefresh,
   users,
 }: {
   initialError?: string | null;
+  onRefresh: () => void;
   users: IdentityUser[];
 }) {
-  const router = useRouter();
   const [form, setForm] = useState<FormState>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [formPending, setFormPending] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(initialError ?? null);
+  const [actionError, setActionError] = useState<string | null>(
+    initialError ?? null
+  );
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function refresh() {
-    startTransition(() => router.refresh());
+    startTransition(() => {
+      setActionError(null);
+      onRefresh();
+    });
   }
 
   async function runAction(user: IdentityUser, action: () => Promise<unknown>) {

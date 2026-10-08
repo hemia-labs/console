@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/zuno/button";
 
 export function ConfirmAction({
   children,
@@ -19,7 +19,7 @@ export function ConfirmAction({
 }) {
   return (
     <Button
-      className="h-12"
+      className="h-8"
       disabled={disabled}
       onClick={() => {
         if (window.confirm(confirmMessage)) {

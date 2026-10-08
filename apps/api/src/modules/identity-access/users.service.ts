@@ -14,7 +14,7 @@ export class UsersService {
   constructor(private readonly hemiaIdAdminClient: HemiaIdAdminClient) {}
 
   findAll(query: ListUsersQueryDto, auth: HemiaIdAdminAuth): Promise<unknown> {
-    return this.hemiaIdAdminClient.request({
+    return this.hemiaIdAdminClient.requestService({
       method: 'GET',
       path: '/users',
       query: query as Record<string, HemiaIdAdminQueryValue>,
@@ -23,7 +23,7 @@ export class UsersService {
   }
 
   findOne(id: string, auth: HemiaIdAdminAuth): Promise<unknown> {
-    return this.hemiaIdAdminClient.request({
+    return this.hemiaIdAdminClient.requestService({
       method: 'GET',
       path: `/users/${id}`,
       auth,
@@ -31,7 +31,7 @@ export class UsersService {
   }
 
   create(dto: CreateUserDto, auth: HemiaIdAdminAuth): Promise<unknown> {
-    return this.hemiaIdAdminClient.request({
+    return this.hemiaIdAdminClient.requestService({
       method: 'POST',
       path: '/users',
       body: dto,
@@ -44,7 +44,7 @@ export class UsersService {
     dto: UpdateUserDto,
     auth: HemiaIdAdminAuth,
   ): Promise<unknown> {
-    return this.hemiaIdAdminClient.request({
+    return this.hemiaIdAdminClient.requestService({
       method: 'PATCH',
       path: `/users/${id}`,
       body: dto,
@@ -57,7 +57,7 @@ export class UsersService {
     dto: UpdateUserStatusDto,
     auth: HemiaIdAdminAuth,
   ): Promise<unknown> {
-    return this.hemiaIdAdminClient.request({
+    return this.hemiaIdAdminClient.requestService({
       method: 'PATCH',
       path: `/users/${id}/status`,
       body: dto,
@@ -66,7 +66,7 @@ export class UsersService {
   }
 
   lock(id: string, auth: HemiaIdAdminAuth): Promise<unknown> {
-    return this.hemiaIdAdminClient.request({
+    return this.hemiaIdAdminClient.requestService({
       method: 'PATCH',
       path: `/users/${id}/lock`,
       auth,
@@ -74,7 +74,7 @@ export class UsersService {
   }
 
   unlock(id: string, auth: HemiaIdAdminAuth): Promise<unknown> {
-    return this.hemiaIdAdminClient.request({
+    return this.hemiaIdAdminClient.requestService({
       method: 'PATCH',
       path: `/users/${id}/unlock`,
       auth,
@@ -82,7 +82,7 @@ export class UsersService {
   }
 
   remove(id: string, auth: HemiaIdAdminAuth): Promise<unknown> {
-    return this.hemiaIdAdminClient.request({
+    return this.hemiaIdAdminClient.requestService({
       method: 'DELETE',
       path: `/users/${id}`,
       auth,

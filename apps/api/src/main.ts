@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { SsoExceptionFilter } from '@hemia/auth/nestjs';
+import { ConsoleSsoExceptionFilter } from './modules/auth/console-sso-exception.filter';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { buildAppCorsOptions } from './config/app-cors';
@@ -12,8 +12,8 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.use(cookieParser()); // SsoAuthGuard reads req.cookies
-  app.useGlobalFilters(new SsoExceptionFilter()); // UnauthorizedError -> 401, ConfigError -> 500
+  app.useGlobalFilters(new ConsoleSsoExceptionFilter());
   app.enableCors(buildAppCorsOptions(config));
-  await app.listen(config.get<number>('app.port') ?? 3001);
+  await app.listen(config.get<number>('app.port') ?? 3016);
 }
-bootstrap();
+void bootstrap();

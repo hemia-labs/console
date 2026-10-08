@@ -1,18 +1,18 @@
 "use client";
 
-import { Filter, Plus, Search } from "lucide-react";
+import { Filter, Plus } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/zuno/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+} from "@/components/zuno/dropdown-menu";
+import { SearchInput } from "@/components/zuno/search-input";
 import type { UserStatus } from "@/features/identity-access/types";
 import { userStatuses } from "@/features/identity-access/types";
 
@@ -64,23 +64,21 @@ export function IdentityToolbar({
   return (
     <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_14rem_auto]">
-        <label className="relative block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            className="h-12 bg-card pl-10"
+        <SearchInput
+            className="bg-card"
             onChange={(event) => setSearch(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
                 applyFilters();
               }
             }}
+            aria-label={searchPlaceholder}
             placeholder={searchPlaceholder}
             value={search}
           />
-        </label>
         <DropdownMenu>
           <DropdownMenuTrigger
-            className="inline-flex h-12 w-full items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 text-sm font-medium outline-none transition-all hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
+            className="inline-flex h-8 w-full items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 text-sm font-medium outline-none transition-all hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
             disabled={isPending}
             type="button"
           >
@@ -99,12 +97,12 @@ export function IdentityToolbar({
               }}
               value={status}
             >
-              <DropdownMenuRadioItem className="min-h-12 cursor-pointer px-2" value="">
+              <DropdownMenuRadioItem className="min-h-8 cursor-pointer px-2" value="">
                 Todos los estados
               </DropdownMenuRadioItem>
               {userStatuses.map((item) => (
                 <DropdownMenuRadioItem
-                  className="min-h-12 cursor-pointer px-2"
+                  className="min-h-8 cursor-pointer px-2"
                   key={item}
                   value={item}
                 >
@@ -114,7 +112,7 @@ export function IdentityToolbar({
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button className="h-12" onClick={onCreate} type="button">
+        <Button className="h-8" onClick={onCreate} type="button">
           <Plus className="size-4" />
           {createLabel}
         </Button>

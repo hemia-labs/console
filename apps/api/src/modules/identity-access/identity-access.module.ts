@@ -26,5 +26,6 @@ import { UsersService } from './users.service';
     OAuthClientsService,
     AccountsService,
   ],
+  exports: [SsoCurrentUserAuthGuard],
 })
 export class IdentityAccessModule {}

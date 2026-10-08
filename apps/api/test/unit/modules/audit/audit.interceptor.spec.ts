@@ -98,6 +98,43 @@ describe('AuditInterceptor', () => {
       });
   });
 
+  it('records mutating Access calls', (done) => {
+    const context = contextFor({
+      method: 'POST',
+      originalUrl:
+        '/access/organizations/2df6e282-1517-48ff-9441-8cf80e65399f/archive',
+      headers: {},
+    });
+
+    interceptor
+      .intercept(context, {
+        handle: () => {
+          auditRequestContext.addUpstreamCall({
+            source: 'admin',
+            service: 'access',
+            method: 'POST',
+            path: '/v1/organizations/2df6e282-1517-48ff-9441-8cf80e65399f/archive',
+            traceId: 'trace-123',
+          });
+          return of({ archived: true });
+        },
+      })
+      .subscribe({
+        complete: () => {
+          setImmediate(() => {
+            expect(auditService.record).toHaveBeenCalledWith(
+              expect.objectContaining({
+                route:
+                  '/access/organizations/2df6e282-1517-48ff-9441-8cf80e65399f/archive',
+                resource: 'organizations',
+              }),
+            );
+            done();
+          });
+        },
+      });
+  });
+
   it('skips GET and validation failures without upstream calls', (done) => {
     const context = contextFor({
       method: 'GET',

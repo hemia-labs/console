@@ -1,24 +1,26 @@
 import type { ReactNode } from "react";
+import {
+  PageHeader as ZunoPageHeader,
+  PageHeaderActions,
+  PageHeaderContent,
+  PageHeaderDescription,
+  PageHeaderHeading,
+} from "@/components/zuno/page-header";
 
-export function PageHeader({
-  actions,
-  breadcrumb,
-  description,
-  title,
-}: {
+export function PageHeader({ actions, breadcrumb, description, title }: {
   actions?: ReactNode;
-  breadcrumb: ReactNode;
+  breadcrumb?: ReactNode;
   description: string;
   title: string;
 }) {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      <div className="min-w-0">
+    <ZunoPageHeader className="items-start sm:items-end">
+      <PageHeaderContent>
         {breadcrumb}
-        <h1 className="mt-1 truncate text-2xl font-bold">{title}</h1>
-        <p className="mt-2 max-w-3xl text-sm text-supporting">{description}</p>
-      </div>
-      {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
-    </div>
+        <PageHeaderHeading className="text-2xl font-bold text-heading">{title}</PageHeaderHeading>
+        <PageHeaderDescription className="max-w-3xl text-supporting">{description}</PageHeaderDescription>
+      </PageHeaderContent>
+      {actions && <PageHeaderActions>{actions}</PageHeaderActions>}
+    </ZunoPageHeader>
   );
 }

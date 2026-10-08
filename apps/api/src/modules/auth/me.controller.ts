@@ -1,13 +1,14 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
-import { SsoAuthGuard, CurrentUser } from '@hemia/auth/nestjs';
-import type { AuthenticatedUser } from '@hemia/auth';
+import { Controller, Get, Header, UseGuards } from '@nestjs/common';
+import { CurrentUser, type CurrentUserPayload } from '@hemia/auth/nestjs';
+import { ConsoleAdminGuard } from './console-admin.guard';
+import { toConsoleUser, type ConsoleUser } from './console-user';
 
 @Controller('me')
+@UseGuards(ConsoleAdminGuard)
 export class MeController {
-  // 401 si no hay sesión válida (SsoAuthGuard -> UnauthorizedError -> SsoExceptionFilter).
   @Get()
-  @UseGuards(SsoAuthGuard)
-  me(@CurrentUser() user: AuthenticatedUser): AuthenticatedUser {
-    return user;
+  @Header('Cache-Control', 'no-store')
+  me(@CurrentUser() user: CurrentUserPayload): ConsoleUser {
+    return toConsoleUser(user);
   }
 }

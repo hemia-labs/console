@@ -4,7 +4,7 @@ import {
   UnauthorizedException,
   ValidationPipe,
 } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { createIdentityAccessE2eTestingModule } from './utils/create-identity-access-e2e-testing-module';
@@ -12,7 +12,7 @@ import { HemiaIdAdminClient } from '../../src/integrations/hemia-id/hemia-id-adm
 
 describe('UsersController (e2e)', () => {
   let app: INestApplication<App>;
-  let hemiaIdAdminClient: { request: jest.Mock };
+  let hemiaIdAdminClient: { requestService: jest.Mock };
 
   const userId = '2df6e282-1517-48ff-9441-8cf80e65399f';
   const auth = {
@@ -22,16 +22,21 @@ describe('UsersController (e2e)', () => {
 
   beforeEach(async () => {
     hemiaIdAdminClient = {
-      request: jest.fn().mockResolvedValue({ id: userId, email: 'ana@example.com' }),
+      requestService: jest
+        .fn()
+        .mockResolvedValue({ id: userId, email: 'ana@example.com' }),
     };
 
-    const moduleFixture: TestingModule = await createIdentityAccessE2eTestingModule()
-      .overrideProvider(HemiaIdAdminClient)
-      .useValue(hemiaIdAdminClient)
-      .compile();
+    const moduleFixture: TestingModule =
+      await createIdentityAccessE2eTestingModule()
+        .overrideProvider(HemiaIdAdminClient)
+        .useValue(hemiaIdAdminClient)
+        .compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, transform: true }),
+    );
     await app.init();
   });
 
@@ -40,7 +45,7 @@ describe('UsersController (e2e)', () => {
   });
 
   it('GET /identity-access/users proxies auth and query to Hemia ID', async () => {
-    hemiaIdAdminClient.request.mockResolvedValueOnce([{ id: userId }]);
+    hemiaIdAdminClient.requestService.mockResolvedValueOnce([{ id: userId }]);
 
     await request(app.getHttpServer())
       .get('/identity-access/users')
@@ -50,7 +55,7 @@ describe('UsersController (e2e)', () => {
       .expect(200)
       .expect([{ id: userId }]);
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'GET',
       path: '/users',
       query: { search: 'ana', status: 'active', page: '1', limit: '20' },
@@ -66,7 +71,7 @@ describe('UsersController (e2e)', () => {
       .expect(200)
       .expect({ id: userId, email: 'ana@example.com' });
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'GET',
       path: `/users/${userId}`,
       auth,
@@ -90,7 +95,7 @@ describe('UsersController (e2e)', () => {
       .expect(201)
       .expect({ id: userId, email: 'ana@example.com' });
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'POST',
       path: '/users',
       body: {
@@ -124,7 +129,7 @@ describe('UsersController (e2e)', () => {
       .expect(200)
       .expect({ id: userId, email: 'ana@example.com' });
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'PATCH',
       path: `/users/${userId}`,
       body,
@@ -148,7 +153,7 @@ describe('UsersController (e2e)', () => {
       .expect(200)
       .expect({ id: userId, email: 'ana@example.com' });
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'PATCH',
       path: `/users/${userId}/lock`,
       auth,
@@ -164,7 +169,7 @@ describe('UsersController (e2e)', () => {
       .expect(200)
       .expect({ id: userId, email: 'ana@example.com' });
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'PATCH',
       path: `/users/${userId}/unlock`,
       auth,
@@ -172,7 +177,7 @@ describe('UsersController (e2e)', () => {
   });
 
   it('DELETE /identity-access/users/:id proxies to Hemia ID', async () => {
-    hemiaIdAdminClient.request.mockResolvedValueOnce(undefined);
+    hemiaIdAdminClient.requestService.mockResolvedValueOnce(undefined);
 
     await request(app.getHttpServer())
       .delete(`/identity-access/users/${userId}`)
@@ -181,7 +186,7 @@ describe('UsersController (e2e)', () => {
       .expect(200)
       .expect('');
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'DELETE',
       path: `/users/${userId}`,
       auth,
@@ -192,7 +197,7 @@ describe('UsersController (e2e)', () => {
     [new UnauthorizedException('Missing auth'), 401],
     [new ForbiddenException('Forbidden'), 403],
   ])('returns Hemia ID auth error %p', async (exception, statusCode) => {
-    hemiaIdAdminClient.request.mockRejectedValueOnce(exception);
+    hemiaIdAdminClient.requestService.mockRejectedValueOnce(exception);
 
     await request(app.getHttpServer())
       .get('/identity-access/users')

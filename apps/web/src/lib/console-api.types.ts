@@ -14,7 +14,6 @@ export type ConsoleApiRequestOptions = Omit<
   RequestInit,
   "body" | "credentials" | "method"
 > & {
-  authToken?: string;
   query?: ConsoleApiQuery;
 };
 

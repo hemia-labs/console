@@ -6,6 +6,13 @@ export interface AuditActor {
 }
 
 export const extractAuditActor = (request: Request): AuditActor => {
+  const authenticated = request as Request & {
+    user?: { sub?: string };
+    ssoAuth?: { cookie?: string };
+  };
+  if (authenticated.ssoAuth?.cookie && authenticated.user?.sub) {
+    return { actorSubject: authenticated.user.sub, actorSource: 'cookie' };
+  }
   const authorization = request.headers.authorization;
   const bearerToken = authorization?.startsWith('Bearer ')
     ? authorization.slice('Bearer '.length)
@@ -60,7 +67,9 @@ const decodeJwtSubject = (token: string | undefined): string | undefined => {
       normalized.length + ((4 - (normalized.length % 4)) % 4),
       '=',
     );
-    const parsed = JSON.parse(Buffer.from(padded, 'base64').toString('utf8')) as {
+    const parsed = JSON.parse(
+      Buffer.from(padded, 'base64').toString('utf8'),
+    ) as {
       sub?: unknown;
     };
 

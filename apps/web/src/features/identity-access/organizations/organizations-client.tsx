@@ -6,15 +6,15 @@ import { useMemo, useState, useTransition } from "react";
 
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/zuno/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+} from "@/components/zuno/dropdown-menu";
+import { Input } from "@/components/zuno/input";
 import {
   Table,
   TableBody,
@@ -99,7 +99,7 @@ function OrganizationForm({
         <label className="grid gap-2 text-sm font-medium">
           Nombre
           <Input
-            className="h-12 bg-card"
+            className="h-8 bg-card"
             onChange={(event) => update("name", event.target.value)}
             required
             value={value.name}
@@ -108,7 +108,7 @@ function OrganizationForm({
         <label className="grid gap-2 text-sm font-medium">
           Slug
           <Input
-            className="h-12 bg-card"
+            className="h-8 bg-card"
             onChange={(event) => update("slug", event.target.value)}
             value={value.slug ?? ""}
           />
@@ -116,7 +116,7 @@ function OrganizationForm({
         <label className="grid gap-2 text-sm font-medium">
           Estado
           <Input
-            className="h-12 bg-card"
+            className="h-8 bg-card"
             onChange={(event) => update("status", event.target.value)}
             placeholder="active"
             value={value.status ?? ""}
@@ -133,10 +133,10 @@ function OrganizationForm({
       </div>
       {error ? <p className="mt-4 text-sm font-medium text-destructive">{error}</p> : null}
       <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <Button className="h-12" disabled={pending} onClick={onCancel} type="button" variant="outline">
+        <Button className="h-8" disabled={pending} onClick={onCancel} type="button" variant="outline">
           Cancelar
         </Button>
-        <Button className="h-12" disabled={pending} type="submit">
+        <Button className="h-8" disabled={pending} type="submit">
           Guardar
         </Button>
       </div>
@@ -209,14 +209,14 @@ export function OrganizationsClient({
           <label className="relative block">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              className="h-12 bg-card pl-10"
+              className="h-8 bg-card pl-10"
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Buscar organizaciones"
               value={search}
             />
           </label>
           <Button
-            className="h-12"
+            className="h-8"
             onClick={() => {
               setForm({ mode: "create" });
               setFormError(null);
@@ -278,7 +278,7 @@ export function OrganizationsClient({
                         <DropdownMenu>
                           <DropdownMenuTrigger
                             aria-label="Acciones de organizacion"
-                            className="inline-flex size-12 items-center justify-center rounded-md border border-border bg-background outline-none hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+                            className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-background outline-none hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
                             disabled={pendingId === id || !id}
                             type="button"
                           >
@@ -286,7 +286,7 @@ export function OrganizationsClient({
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-56">
                             <DropdownMenuItem
-                              className="min-h-12 cursor-pointer gap-2 px-2"
+                              className="min-h-8 cursor-pointer gap-2 px-2"
                               onClick={() => {
                                 setForm({ mode: "edit", organization });
                                 setFormError(null);
@@ -297,7 +297,7 @@ export function OrganizationsClient({
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              className="min-h-12 cursor-pointer gap-2 px-2"
+                              className="min-h-8 cursor-pointer gap-2 px-2"
                               onClick={() => {
                                 if (window.confirm("Esta accion eliminara la organizacion. Continuar?")) {
                                   runAction(id, () => deleteOrganization(id));

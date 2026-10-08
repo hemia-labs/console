@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { BrandWordmark } from "@/components/brand-wordmark";
+import { UserAvatar } from "@/components/user-avatar";
 import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 
@@ -48,7 +51,7 @@ function NavLink({
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
-        className="min-h-12 justify-start text-blue-50/95 hover:bg-white/10 hover:text-white data-active:bg-primary data-active:text-primary-foreground data-active:shadow-lg data-active:shadow-blue-950/25 group-data-[collapsible=icon]:size-12! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0! [&_svg]:size-5"
+        className="justify-start"
         isActive={isActive(pathname, item.href)}
         render={
           <Link href={localizedHref(locale, item.href)}>
@@ -56,7 +59,6 @@ function NavLink({
             <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
           </Link>
         }
-        size="lg"
         tooltip={item.label}
       />
     </SidebarMenuItem>
@@ -84,10 +86,9 @@ function NavGroup({
     <SidebarMenuItem>
       <SidebarMenuButton
         aria-expanded={expanded}
-        className="min-h-12 justify-start text-blue-50/95 hover:bg-white/10 hover:text-white data-active:bg-primary data-active:text-primary-foreground data-active:shadow-lg data-active:shadow-blue-950/25 group-data-[collapsible=icon]:size-12! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0! [&_svg]:size-5"
-        isActive={active}
+        className="justify-start"
+        isActive={false}
         onClick={() => setExpanded((open) => !open)}
-        size="lg"
         tooltip={item.label}
       >
         <Icon />
@@ -105,7 +106,7 @@ function NavGroup({
             return (
               <SidebarMenuSubItem key={child.href}>
                 <SidebarMenuSubButton
-                  className="min-h-10 text-blue-50/85 hover:bg-white/10 hover:text-white data-active:bg-primary data-active:text-primary-foreground"
+                  className="data-active:bg-sidebar-selected"
                   isActive={isActive(pathname, child.href)}
                   render={
                     <Link href={localizedHref(locale, child.href)}>
@@ -127,26 +128,22 @@ export function AppSidebar({ locale }: { locale: string }) {
   const pathname = stripLocale(usePathname());
 
   return (
-    <Sidebar className="border-r border-white/10" collapsible="icon">
-      <SidebarHeader className="h-topbar justify-center px-4">
+    <Sidebar collapsible="icon">
+      <SidebarHeader className="h-topbar justify-center group-data-[collapsible=icon]:px-3">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              className="min-h-12 justify-start text-white hover:bg-white/10 hover:text-white group-data-[collapsible=icon]:size-12! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0!"
-              size="lg"
-              tooltip="Hemia Console"
-            >
-              <span className="grid size-8 shrink-0 place-items-center rounded-md bg-primary text-sm font-bold text-primary-foreground">
-                H
+            <SidebarMenuButton size="lg" render={<Link href={localizedHref(locale, "/")} aria-label="Hemia Console" />}>
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-[var(--hemia-navy)] p-0.5 dark:bg-transparent dark:p-0 group-data-[collapsible=icon]:size-8">
+                <Image src="/logo.png" alt="" width={96} height={66} className="h-auto w-full" />
               </span>
-              <span className="text-lg font-bold group-data-[collapsible=icon]:hidden">Hemia Console</span>
+              <BrandWordmark className="group-data-[collapsible=icon]:hidden" />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarSeparator className="bg-white/10" />
+      <SidebarSeparator className="bg-sidebar-border" />
       <SidebarContent>
-        <SidebarGroup>
+        <SidebarGroup className="group-data-[collapsible=icon]:px-3">
           <SidebarGroupContent>
             <SidebarMenu className="gap-1 group-data-[collapsible=icon]:items-center">
               {nav.map((item) => (
@@ -161,12 +158,12 @@ export function AppSidebar({ locale }: { locale: string }) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarSeparator className="bg-white/10" />
-      <SidebarFooter className="p-4">
-        <div className="flex min-h-12 items-center gap-2 rounded-lg bg-white/5 px-3 text-xs text-blue-50/95 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
-          <span className="size-2 shrink-0 rounded-full bg-emerald-400" />
-          <span className="truncate group-data-[collapsible=icon]:sr-only">Sistema operativo</span>
-        </div>
+      <SidebarFooter className="border-t border-sidebar-border group-data-[collapsible=icon]:px-3">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <UserAvatar locale={locale} />
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

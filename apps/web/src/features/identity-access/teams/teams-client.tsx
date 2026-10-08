@@ -6,15 +6,15 @@ import { useMemo, useState, useTransition } from "react";
 
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/zuno/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+} from "@/components/zuno/dropdown-menu";
+import { Input } from "@/components/zuno/input";
 import {
   Table,
   TableBody,
@@ -91,19 +91,19 @@ function TeamForm({
       <div className="mt-5 grid gap-4 md:grid-cols-2">
         <label className="grid gap-2 text-sm font-medium">
           Nombre
-          <Input className="h-12 bg-card" onChange={(event) => update("name", event.target.value)} required value={value.name} />
+          <Input className="h-8 bg-card" onChange={(event) => update("name", event.target.value)} required value={value.name} />
         </label>
         <label className="grid gap-2 text-sm font-medium">
           Organization ID
-          <Input className="h-12 bg-card" onChange={(event) => update("organizationId", event.target.value)} value={value.organizationId ?? ""} />
+          <Input className="h-8 bg-card" onChange={(event) => update("organizationId", event.target.value)} value={value.organizationId ?? ""} />
         </label>
         <label className="grid gap-2 text-sm font-medium">
           Slug
-          <Input className="h-12 bg-card" onChange={(event) => update("slug", event.target.value)} value={value.slug ?? ""} />
+          <Input className="h-8 bg-card" onChange={(event) => update("slug", event.target.value)} value={value.slug ?? ""} />
         </label>
         <label className="grid gap-2 text-sm font-medium">
           Estado
-          <Input className="h-12 bg-card" onChange={(event) => update("status", event.target.value)} placeholder="active" value={value.status ?? ""} />
+          <Input className="h-8 bg-card" onChange={(event) => update("status", event.target.value)} placeholder="active" value={value.status ?? ""} />
         </label>
         <label className="grid gap-2 text-sm font-medium md:col-span-2">
           Descripcion
@@ -112,10 +112,10 @@ function TeamForm({
       </div>
       {error ? <p className="mt-4 text-sm font-medium text-destructive">{error}</p> : null}
       <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <Button className="h-12" disabled={pending} onClick={onCancel} type="button" variant="outline">
+        <Button className="h-8" disabled={pending} onClick={onCancel} type="button" variant="outline">
           Cancelar
         </Button>
-        <Button className="h-12" disabled={pending} type="submit">
+        <Button className="h-8" disabled={pending} type="submit">
           Guardar
         </Button>
       </div>
@@ -187,9 +187,9 @@ export function TeamsClient({
         <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
           <label className="relative block">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input className="h-12 bg-card pl-10" onChange={(event) => setSearch(event.target.value)} placeholder="Buscar teams" value={search} />
+            <Input className="h-8 bg-card pl-10" onChange={(event) => setSearch(event.target.value)} placeholder="Buscar teams" value={search} />
           </label>
-          <Button className="h-12" onClick={() => { setForm({ mode: "create" }); setFormError(null); }} type="button">
+          <Button className="h-8" onClick={() => { setForm({ mode: "create" }); setFormError(null); }} type="button">
             <Plus className="size-4" />
             Crear team
           </Button>
@@ -225,16 +225,16 @@ export function TeamsClient({
                       <TableCell className="px-4 py-3"><IdentityStatusBadge status={team.status} /></TableCell>
                       <TableCell className="px-4 py-3 text-right">
                         <DropdownMenu>
-                          <DropdownMenuTrigger aria-label="Acciones de team" className="inline-flex size-12 items-center justify-center rounded-md border border-border bg-background outline-none hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50" disabled={pendingId === id || !id} type="button">
+                          <DropdownMenuTrigger aria-label="Acciones de team" className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-background outline-none hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50" disabled={pendingId === id || !id} type="button">
                             <MoreHorizontal className="size-4" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuItem className="min-h-12 cursor-pointer gap-2 px-2" onClick={() => { setForm({ mode: "edit", team }); setFormError(null); }}>
+                            <DropdownMenuItem className="min-h-8 cursor-pointer gap-2 px-2" onClick={() => { setForm({ mode: "edit", team }); setFormError(null); }}>
                               <Pencil className="size-4" />
                               Editar
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="min-h-12 cursor-pointer gap-2 px-2" onClick={() => { if (window.confirm("Esta accion eliminara el team. Continuar?")) runAction(id, () => deleteTeam(id)); }} variant="destructive">
+                            <DropdownMenuItem className="min-h-8 cursor-pointer gap-2 px-2" onClick={() => { if (window.confirm("Esta accion eliminara el team. Continuar?")) runAction(id, () => deleteTeam(id)); }} variant="destructive">
                               <Trash2 className="size-4" />
                               Eliminar
                             </DropdownMenuItem>

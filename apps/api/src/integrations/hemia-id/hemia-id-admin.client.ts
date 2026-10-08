@@ -78,10 +78,7 @@ export class HemiaIdAdminClient {
     options: HemiaIdAdminRequestOptions,
   ): Promise<Response> {
     const controller = new AbortController();
-    const timeout = setTimeout(
-      () => controller.abort(),
-      this.getTimeoutMs(),
-    );
+    const timeout = setTimeout(() => controller.abort(), this.getTimeoutMs());
 
     try {
       const response = await fetch(this.buildUrl(options), {
@@ -113,10 +110,7 @@ export class HemiaIdAdminClient {
     options: HemiaIdAdminRequestOptions,
   ): Promise<Response> {
     const controller = new AbortController();
-    const timeout = setTimeout(
-      () => controller.abort(),
-      this.getTimeoutMs(),
-    );
+    const timeout = setTimeout(() => controller.abort(), this.getTimeoutMs());
 
     try {
       const response = await fetch(this.buildUrl(options), {
@@ -128,6 +122,11 @@ export class HemiaIdAdminClient {
 
       if (!response.ok) {
         this.recordUpstreamCall(options, response);
+        if ([401, 403].includes(response.status)) {
+          throw new ServiceUnavailableException(
+            'Identity administrative credentials rejected',
+          );
+        }
         throw await this.toHttpException(response);
       }
 
@@ -154,7 +153,9 @@ export class HemiaIdAdminClient {
     }
 
     const clientId = this.config.get<string>('hemiaId.service.clientId');
-    const clientSecret = this.config.get<string>('hemiaId.service.clientSecret');
+    const clientSecret = this.config.get<string>(
+      'hemiaId.service.clientSecret',
+    );
 
     if (!clientId || !clientSecret) {
       throw new ServiceUnavailableException(
@@ -190,10 +191,7 @@ export class HemiaIdAdminClient {
     clientSecret: string,
   ): Promise<Response> {
     const controller = new AbortController();
-    const timeout = setTimeout(
-      () => controller.abort(),
-      this.getTimeoutMs(),
-    );
+    const timeout = setTimeout(() => controller.abort(), this.getTimeoutMs());
 
     try {
       const scope = this.config.get<string>('hemiaId.service.scopes');
@@ -218,7 +216,9 @@ export class HemiaIdAdminClient {
       });
 
       if (!response.ok) {
-        throw await this.toHttpException(response);
+        throw new ServiceUnavailableException(
+          'Identity administrative credentials rejected',
+        );
       }
 
       return response;
@@ -235,7 +235,7 @@ export class HemiaIdAdminClient {
 
   private buildUrl(options: HemiaIdAdminRequestOptions): string {
     const baseUrl = this.withoutTrailingSlash(
-      this.config.get<string>('hemiaId.baseUrl') ?? 'http://localhost:3000',
+      this.config.get<string>('hemiaId.baseUrl') ?? 'http://localhost:4000',
     );
     const adminPrefix = this.withSlashes(
       this.config.get<string>('hemiaId.adminPrefix') ?? '/api/v1',
@@ -262,10 +262,6 @@ export class HemiaIdAdminClient {
 
     if (options.auth?.authorization) {
       headers.Authorization = options.auth.authorization;
-    }
-
-    if (options.auth?.cookie) {
-      headers.Cookie = options.auth.cookie;
     }
 
     if (options.auth?.tenantId) {
@@ -296,7 +292,7 @@ export class HemiaIdAdminClient {
 
   private buildServiceTokenUrl(): string {
     const baseUrl = this.withoutTrailingSlash(
-      this.config.get<string>('hemiaId.baseUrl') ?? 'http://localhost:3000',
+      this.config.get<string>('hemiaId.baseUrl') ?? 'http://localhost:4000',
     );
     const tokenUrl = this.withLeadingSlash(
       this.config.get<string>('hemiaId.service.tokenUrl') ?? '/oauth/token',
@@ -369,6 +365,7 @@ export class HemiaIdAdminClient {
   ): void {
     this.auditRequestContext?.addUpstreamCall({
       source: 'admin',
+      service: 'hemia-id',
       method: options.method,
       path: options.path,
       requestId: this.extractMetadata(response).requestId,
@@ -392,12 +389,16 @@ export class HemiaIdAdminClient {
         return new ConflictException(message);
       default:
         return new ServiceUnavailableException(
-          response.status >= 500 ? message : 'Hemia ID Admin API request failed',
+          response.status >= 500
+            ? message
+            : 'Hemia ID Admin API request failed',
         );
     }
   }
 
-  private async getSafeErrorMessage(response: Response): Promise<string | string[]> {
+  private async getSafeErrorMessage(
+    response: Response,
+  ): Promise<string | string[]> {
     const fallback = this.defaultErrorMessage(response.status);
     const contentType = response.headers.get('content-type') ?? '';
 

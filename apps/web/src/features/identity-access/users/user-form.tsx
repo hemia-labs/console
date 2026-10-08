@@ -3,8 +3,8 @@
 import { Save, X } from "lucide-react";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/zuno/button";
+import { Input } from "@/components/zuno/input";
 import type {
   CreateUserPayload,
   IdentityUser,
@@ -91,7 +91,7 @@ export function UserForm({
           Email
           <Input
             aria-invalid={Boolean(error && !form.email)}
-            className="h-12 bg-card"
+            className="h-8 bg-card"
             onChange={(event) => update("email", event.target.value)}
             required={mode === "create"}
             type="email"
@@ -101,7 +101,7 @@ export function UserForm({
         <label className="grid gap-2 text-sm font-medium">
           Password
           <Input
-            className="h-12 bg-card"
+            className="h-8 bg-card"
             onChange={(event) => update("password", event.target.value)}
             placeholder={mode === "edit" ? "Dejar vacio para no cambiar" : ""}
             type="password"
@@ -111,7 +111,7 @@ export function UserForm({
         <label className="grid gap-2 text-sm font-medium">
           Nombre
           <Input
-            className="h-12 bg-card"
+            className="h-8 bg-card"
             onChange={(event) => update("firstName", event.target.value)}
             value={form.firstName}
           />
@@ -119,7 +119,7 @@ export function UserForm({
         <label className="grid gap-2 text-sm font-medium">
           Apellido
           <Input
-            className="h-12 bg-card"
+            className="h-8 bg-card"
             onChange={(event) => update("lastName", event.target.value)}
             value={form.lastName}
           />
@@ -127,7 +127,7 @@ export function UserForm({
         <label className="grid gap-2 text-sm font-medium">
           Nombre completo
           <Input
-            className="h-12 bg-card"
+            className="h-8 bg-card"
             onChange={(event) => update("name", event.target.value)}
             value={form.name}
           />
@@ -135,7 +135,7 @@ export function UserForm({
         <label className="grid gap-2 text-sm font-medium">
           Display name
           <Input
-            className="h-12 bg-card"
+            className="h-8 bg-card"
             onChange={(event) => update("displayName", event.target.value)}
             value={form.displayName}
           />
@@ -143,7 +143,7 @@ export function UserForm({
         <label className="grid gap-2 text-sm font-medium">
           Estado
           <select
-            className="h-12 rounded-md border border-input bg-card px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="h-8 rounded-md border border-input bg-card px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
             onChange={(event) => update("status", event.target.value as UserStatus)}
             value={form.status}
           >
@@ -160,7 +160,7 @@ export function UserForm({
 
       <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <Button
-          className="h-12"
+          className="h-8"
           disabled={pending}
           onClick={onCancel}
           type="button"
@@ -169,7 +169,7 @@ export function UserForm({
           <X className="size-4" />
           Cancelar
         </Button>
-        <Button className="h-12" disabled={pending} type="submit">
+        <Button className="h-8" disabled={pending} type="submit">
           <Save className="size-4" />
           {pending ? "Guardando..." : "Guardar"}
         </Button>

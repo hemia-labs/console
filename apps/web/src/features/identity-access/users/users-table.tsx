@@ -11,14 +11,14 @@ import {
 } from "lucide-react";
 
 import { EmptyState } from "@/components/empty-state";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/zuno/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/zuno/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -93,7 +93,7 @@ export function UsersTable({
                 <TableRow key={id || user.email || userDisplayName(user)}>
                   <TableCell className="px-4 py-3">
                     <div className="flex min-w-0 items-center gap-3">
-                      <Avatar size="lg" className="bg-secondary text-primary">
+                      <Avatar size="default" className="bg-secondary text-primary">
                         <AvatarFallback className="bg-transparent text-xs font-bold text-inherit">
                           {userInitials(user)}
                         </AvatarFallback>
@@ -119,7 +119,7 @@ export function UsersTable({
                     <DropdownMenu>
                       <DropdownMenuTrigger
                         aria-label="Acciones de usuario"
-                        className="inline-flex size-12 shrink-0 items-center justify-center rounded-md border border-border bg-background text-sm font-medium outline-none transition-colors hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
+                        className="inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-background text-sm font-medium outline-none transition-colors hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
                         disabled={pending || !id}
                         type="button"
                       >
@@ -127,7 +127,7 @@ export function UsersTable({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-56">
                         <DropdownMenuItem
-                          className="min-h-12 cursor-pointer gap-2 px-2"
+                          className="min-h-8 cursor-pointer gap-2 px-2"
                           onClick={() => onEdit(user)}
                         >
                           <Pencil className="size-4" />
@@ -136,7 +136,7 @@ export function UsersTable({
                         <DropdownMenuSeparator />
                         {status === "locked" ? (
                           <DropdownMenuItem
-                            className="min-h-12 cursor-pointer gap-2 px-2"
+                            className="min-h-8 cursor-pointer gap-2 px-2"
                             onClick={() => {
                               if (
                                 window.confirm("Esta accion desbloqueara el usuario. Continuar?")
@@ -150,7 +150,7 @@ export function UsersTable({
                           </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem
-                            className="min-h-12 cursor-pointer gap-2 px-2"
+                            className="min-h-8 cursor-pointer gap-2 px-2"
                             onClick={() => {
                               if (window.confirm("Esta accion bloqueara el usuario. Continuar?")) {
                                 onLock(user);
@@ -162,7 +162,7 @@ export function UsersTable({
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem
-                          className="min-h-12 cursor-pointer gap-2 px-2"
+                          className="min-h-8 cursor-pointer gap-2 px-2"
                           onClick={() => {
                             if (window.confirm("Esta accion suspendera el usuario. Continuar?")) {
                               onStatus(user, "suspended");
@@ -173,7 +173,7 @@ export function UsersTable({
                           Suspender
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          className="min-h-12 cursor-pointer gap-2 px-2"
+                          className="min-h-8 cursor-pointer gap-2 px-2"
                           onClick={() => {
                             if (window.confirm("Esta accion activara el usuario. Continuar?")) {
                               onStatus(user, "active");
@@ -185,7 +185,7 @@ export function UsersTable({
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          className="min-h-12 cursor-pointer gap-2 px-2"
+                          className="min-h-8 cursor-pointer gap-2 px-2"
                           onClick={() => {
                             if (window.confirm("Esta accion eliminara el usuario. Continuar?")) {
                               onDelete(user);

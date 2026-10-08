@@ -3,9 +3,11 @@ import { AsyncLocalStorage } from 'async_hooks';
 
 export interface AuditUpstreamCall {
   source: 'admin' | 'external';
+  service?: 'access' | 'hemia-id';
   method: string;
   path: string;
   requestId?: string;
+  traceId?: string;
 }
 
 interface AuditRequestStore {

@@ -1,15 +1,19 @@
-import { Module } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  RequestMethod,
+  type NestModule,
+} from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SsoModule, SESSION_STORE } from '@hemia/auth/nestjs';
 import type { SsoConfig } from '@hemia/auth';
 import { RedisModule } from './redis.module';
 import { RedisSessionStore } from './redis-session-store';
 import { MeController } from './me.controller';
+import { ConsoleAuthorizationService } from './console-authorization.service';
+import { ConsoleAdminGuard } from './console-admin.guard';
+import { AuthSessionMiddleware } from './auth-session.middleware';
 
-// Monta /auth/{login,callback,session,logout} y expone SsoAuthGuard/SsoClient (global).
-// ponytail: el guard NO se aplica global en main.ts a propósito — eso protegería todos los
-// endpoints existentes (incluido external/* servicio-a-servicio). Usá @UseGuards(SsoAuthGuard)
-// por controlador cuando quieras proteger una ruta.
 @Module({
   imports: [
     SsoModule.forRootAsync({
@@ -21,5 +25,17 @@ import { MeController } from './me.controller';
     }),
   ],
   controllers: [MeController],
+  providers: [
+    ConsoleAuthorizationService,
+    ConsoleAdminGuard,
+    AuthSessionMiddleware,
+  ],
+  exports: [ConsoleAuthorizationService, ConsoleAdminGuard],
 })
-export class AuthModule {}
+export class AuthModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(AuthSessionMiddleware)
+      .forRoutes({ method: RequestMethod.GET, path: 'auth/session' });
+  }
+}

@@ -1,4 +1,4 @@
-import { Loader2 } from "lucide-react";
+import { Spinner } from "@/components/zuno/spinner";
 
 import { cn } from "@/lib/utils";
 
@@ -19,7 +19,7 @@ export function LoadingState({
       role="status"
     >
       <div className="flex flex-col items-center gap-3">
-        <Loader2 className="size-6 animate-spin text-primary" />
+        <Spinner className="size-6 text-primary" label={label} />
         <p className="text-sm font-medium text-muted-foreground">{label}</p>
       </div>
     </div>

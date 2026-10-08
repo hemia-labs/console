@@ -23,7 +23,7 @@ describe('HemiaIdAdminClient', () => {
           'hemiaId.baseUrl': 'http://localhost:3000/',
           'hemiaId.adminPrefix': '/api/v1',
           'hemiaId.timeoutMs': 5000,
-          'hemiaId.service.clientId': 'identity-admin-service',
+          'hemiaId.service.clientId': 'console-identity-admin',
           'hemiaId.service.clientSecret': 'service-secret',
           'hemiaId.service.scopes':
             'identity.users.read identity.oauth_clients.read',
@@ -79,7 +79,6 @@ describe('HemiaIdAdminClient', () => {
         headers: {
           Accept: 'application/json',
           Authorization: 'Bearer secret-token',
-          Cookie: 'access_token=secret-cookie',
           'X-Tenant-Id': 'tenant-id',
         },
       }),
@@ -194,7 +193,7 @@ describe('HemiaIdAdminClient', () => {
         },
         body: JSON.stringify({
           grant_type: 'client_credentials',
-          client_id: 'identity-admin-service',
+          client_id: 'console-identity-admin',
           client_secret: 'service-secret',
           scope: 'identity.users.read identity.oauth_clients.read',
         }),
@@ -354,7 +353,7 @@ describe('HemiaIdAdminClient', () => {
       client.requestService({ method: 'GET', path: '/users' }),
     ).rejects.toMatchObject({
       response: expect.objectContaining({
-        message: 'Hemia ID Admin API request failed',
+        message: 'Identity administrative credentials rejected',
       }),
     });
   });

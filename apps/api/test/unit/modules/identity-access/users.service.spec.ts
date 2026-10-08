@@ -10,7 +10,7 @@ import { UsersService } from 'src/modules/identity-access/users.service';
 
 describe('UsersService', () => {
   let service: UsersService;
-  let hemiaIdAdminClient: { request: jest.Mock };
+  let hemiaIdAdminClient: { requestService: jest.Mock };
 
   const auth = {
     authorization: 'Bearer access-token',
@@ -19,7 +19,7 @@ describe('UsersService', () => {
 
   beforeEach(async () => {
     hemiaIdAdminClient = {
-      request: jest.fn().mockResolvedValue({ ok: true }),
+      requestService: jest.fn().mockResolvedValue({ ok: true }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -45,7 +45,7 @@ describe('UsersService', () => {
 
     await service.findAll(query, auth);
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'GET',
       path: '/users',
       query,
@@ -56,7 +56,7 @@ describe('UsersService', () => {
   it('finds one user', async () => {
     await service.findOne('user-id', auth);
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'GET',
       path: '/users/user-id',
       auth,
@@ -73,7 +73,7 @@ describe('UsersService', () => {
 
     await service.create(dto, auth);
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'POST',
       path: '/users',
       body: dto,
@@ -89,7 +89,7 @@ describe('UsersService', () => {
 
     await service.update('user-id', dto, auth);
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'PATCH',
       path: '/users/user-id',
       body: dto,
@@ -102,7 +102,7 @@ describe('UsersService', () => {
 
     await service.updateStatus('user-id', dto, auth);
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'PATCH',
       path: '/users/user-id/status',
       body: dto,
@@ -113,7 +113,7 @@ describe('UsersService', () => {
   it('locks a user without body', async () => {
     await service.lock('user-id', auth);
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'PATCH',
       path: '/users/user-id/lock',
       auth,
@@ -123,7 +123,7 @@ describe('UsersService', () => {
   it('unlocks a user without body', async () => {
     await service.unlock('user-id', auth);
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'PATCH',
       path: '/users/user-id/unlock',
       auth,
@@ -133,7 +133,7 @@ describe('UsersService', () => {
   it('removes a user', async () => {
     await service.remove('user-id', auth);
 
-    expect(hemiaIdAdminClient.request).toHaveBeenCalledWith({
+    expect(hemiaIdAdminClient.requestService).toHaveBeenCalledWith({
       method: 'DELETE',
       path: '/users/user-id',
       auth,
@@ -145,7 +145,7 @@ describe('UsersService', () => {
     new ForbiddenException('Forbidden'),
     new ServiceUnavailableException('Hemia ID down'),
   ])('propagates Hemia ID client exception %p', async (exception) => {
-    hemiaIdAdminClient.request.mockRejectedValue(exception);
+    hemiaIdAdminClient.requestService.mockRejectedValue(exception);
 
     await expect(service.findAll({}, auth)).rejects.toBe(exception);
   });

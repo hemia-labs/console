@@ -5,18 +5,14 @@ export interface AppCorsOptions {
   credentials: boolean;
 }
 
-export const buildAppCorsOptions = (
-  config: ConfigService,
-): AppCorsOptions => {
+export const buildAppCorsOptions = (config: ConfigService): AppCorsOptions => {
   const origins = config.get<string[]>('app.corsOrigins') ?? [
-    'http://localhost:3000',
+    'http://localhost:5176',
   ];
-  const credentials = config.get<boolean>('app.corsCredentials') ?? false;
+  const credentials = config.get<boolean>('app.corsCredentials') ?? true;
 
   return {
-    origin: credentials
-      ? origins.filter((origin) => origin !== '*')
-      : origins,
+    origin: credentials ? origins.filter((origin) => origin !== '*') : origins,
     credentials,
   };
 };

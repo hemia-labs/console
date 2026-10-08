@@ -6,15 +6,15 @@ import { useState, useTransition } from "react";
 
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/zuno/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+} from "@/components/zuno/dropdown-menu";
+import { Input } from "@/components/zuno/input";
 import {
   Table,
   TableBody,
@@ -89,31 +89,31 @@ function MembershipForm({
       <div className="mt-5 grid gap-4 md:grid-cols-2">
         <label className="grid gap-2 text-sm font-medium">
           User ID
-          <Input className="h-12 bg-card" onChange={(event) => update("userId", event.target.value)} required value={value.userId} />
+          <Input className="h-8 bg-card" onChange={(event) => update("userId", event.target.value)} required value={value.userId} />
         </label>
         <label className="grid gap-2 text-sm font-medium">
           Organization ID
-          <Input className="h-12 bg-card" onChange={(event) => update("organizationId", event.target.value)} value={value.organizationId ?? ""} />
+          <Input className="h-8 bg-card" onChange={(event) => update("organizationId", event.target.value)} value={value.organizationId ?? ""} />
         </label>
         <label className="grid gap-2 text-sm font-medium">
           Team ID
-          <Input className="h-12 bg-card" onChange={(event) => update("teamId", event.target.value)} value={value.teamId ?? ""} />
+          <Input className="h-8 bg-card" onChange={(event) => update("teamId", event.target.value)} value={value.teamId ?? ""} />
         </label>
         <label className="grid gap-2 text-sm font-medium">
           Role ID
-          <Input className="h-12 bg-card" onChange={(event) => update("roleId", event.target.value)} value={value.roleId ?? ""} />
+          <Input className="h-8 bg-card" onChange={(event) => update("roleId", event.target.value)} value={value.roleId ?? ""} />
         </label>
         <label className="grid gap-2 text-sm font-medium">
           Estado
-          <Input className="h-12 bg-card" onChange={(event) => update("status", event.target.value)} value={value.status ?? ""} />
+          <Input className="h-8 bg-card" onChange={(event) => update("status", event.target.value)} value={value.status ?? ""} />
         </label>
       </div>
       {error ? <p className="mt-4 text-sm font-medium text-destructive">{error}</p> : null}
       <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <Button className="h-12" disabled={pending} onClick={onCancel} type="button" variant="outline">
+        <Button className="h-8" disabled={pending} onClick={onCancel} type="button" variant="outline">
           Cancelar
         </Button>
-        <Button className="h-12" disabled={pending} type="submit">
+        <Button className="h-8" disabled={pending} type="submit">
           Guardar
         </Button>
       </div>
@@ -187,7 +187,7 @@ export function MembershipsClient({
           <label className="relative block">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              className="h-12 bg-card pl-10"
+              className="h-8 bg-card pl-10"
               onChange={(event) => setUserId(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === "Enter") applyFilter();
@@ -196,10 +196,10 @@ export function MembershipsClient({
               value={userId}
             />
           </label>
-          <Button className="h-12" disabled={isPending} onClick={applyFilter} type="button" variant="outline">
+          <Button className="h-8" disabled={isPending} onClick={applyFilter} type="button" variant="outline">
             Filtrar
           </Button>
-          <Button className="h-12" onClick={() => { setShowForm(true); setFormError(null); }} type="button">
+          <Button className="h-8" onClick={() => { setShowForm(true); setFormError(null); }} type="button">
             <Plus className="size-4" />
             Crear membresia
           </Button>
@@ -234,18 +234,18 @@ export function MembershipsClient({
                       <TableCell className="px-4 py-3"><IdentityStatusBadge status={membership.status} /></TableCell>
                       <TableCell className="px-4 py-3 text-right">
                         <DropdownMenu>
-                          <DropdownMenuTrigger aria-label="Acciones de membresia" className="inline-flex size-12 items-center justify-center rounded-md border border-border bg-background outline-none hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50" disabled={pendingId === id || !id} type="button">
+                          <DropdownMenuTrigger aria-label="Acciones de membresia" className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-background outline-none hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50" disabled={pendingId === id || !id} type="button">
                             <MoreHorizontal className="size-4" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-64">
                             <div className="grid gap-2 p-2">
-                              <Input className="h-12 bg-card" onChange={(event) => setStatusValue(event.target.value)} placeholder="Nuevo status" value={statusValue} />
-                              <Button className="h-12" onClick={() => runAction(id, () => updateMembershipStatus(id, statusValue.trim()))} type="button">
+                              <Input className="h-8 bg-card" onChange={(event) => setStatusValue(event.target.value)} placeholder="Nuevo status" value={statusValue} />
+                              <Button className="h-8" onClick={() => runAction(id, () => updateMembershipStatus(id, statusValue.trim()))} type="button">
                                 Cambiar status
                               </Button>
                             </div>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="min-h-12 cursor-pointer gap-2 px-2" onClick={() => { if (window.confirm("Esta accion eliminara la membresia. Continuar?")) runAction(id, () => deleteMembership(id)); }} variant="destructive">
+                            <DropdownMenuItem className="min-h-8 cursor-pointer gap-2 px-2" onClick={() => { if (window.confirm("Esta accion eliminara la membresia. Continuar?")) runAction(id, () => deleteMembership(id)); }} variant="destructive">
                               <Trash2 className="size-4" />
                               Eliminar
                             </DropdownMenuItem>

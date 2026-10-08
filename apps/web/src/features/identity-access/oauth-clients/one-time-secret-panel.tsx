@@ -1,12 +1,11 @@
 "use client";
 
-import { Check, Copy, KeyRound, X } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, Copy, KeyRound, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/zuno/button";
+import { Card } from "@/components/zuno/card";
 import type { OneTimeOAuthSecret } from "./types";
 
 export function OneTimeSecretPanel({
@@ -19,78 +18,85 @@ export function OneTimeSecretPanel({
   secret: OneTimeOAuthSecret;
 }) {
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState(false);
   const details = [
     { label: "Client ID", value: secret.clientId },
     { label: "Audience", value: secret.audience },
-    { label: "Type", value: secret.type },
-    { label: "Estado", value: secret.status },
+    { label: "Tipo", value: secret.type ? (secret.type === "confidential" ? "Confidencial" : "Público") : undefined },
+    { label: "Estado", value: secret.status ? ({ active: "Activo", suspended: "Suspendido", deleted: "Eliminado" })[secret.status] : undefined },
   ].filter((detail) => detail.value);
 
   async function copySecret() {
-    await navigator.clipboard.writeText(secret.clientSecret);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
+    setCopyError(false);
+    try {
+      await navigator.clipboard.writeText(secret.clientSecret);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+      setCopyError(true);
+    }
   }
 
   return (
-    <Card className="border-primary/20 bg-secondary/70">
-      <CardContent className="p-5">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div className="flex min-w-0 gap-3">
-            <span className="grid size-12 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
-              <KeyRound className="size-5" />
-            </span>
-            <div className="min-w-0">
-              <h2 className="text-base font-semibold text-foreground">{secret.title}</h2>
-              <p className="mt-1 text-sm leading-6 text-supporting">
-                Copia este secreto ahora. Console no puede mostrarlo otra vez.
-              </p>
-              {details.length ? (
-                <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
-                  {details.map((detail) => (
-                    <div key={detail.label} className="min-w-0 rounded-md bg-background px-3 py-2">
-                      <dt className="font-semibold text-muted-foreground">{detail.label}</dt>
-                      <dd className="mt-1 break-all font-semibold text-foreground">
-                        {detail.value}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              ) : null}
-            </div>
-          </div>
-          <div className="flex shrink-0 gap-2">
-            <Button className="h-12" onClick={copySecret} type="button" variant="outline">
-              {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-              {copied ? "Copiado" : "Copiar"}
-            </Button>
-            {onDismiss ? (
-              <Button
-                aria-label="Cerrar secreto"
-                className="size-12"
-                onClick={onDismiss}
-                type="button"
-                variant="ghost"
-              >
-                <X className="size-4" />
-              </Button>
-            ) : null}
-          </div>
+    <Card className="overflow-hidden rounded-lg shadow-sm">
+      <div className="flex items-start gap-3 border-b border-border p-5 sm:p-6">
+        <span className="grid size-10 shrink-0 place-items-center rounded-md bg-zuno-success-surface text-zuno-success">
+          <Check className="size-5" aria-hidden="true" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-lg font-semibold">{secret.title}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Guarda el secreto para conectar tu aplicación a Hemia.</p>
         </div>
-        <div className="mt-4 rounded-md border border-primary/20 bg-background p-3 font-mono text-sm text-foreground">
-          <p className="break-all">{secret.clientSecret}</p>
-        </div>
-        {returnHref ? (
-          <div className="mt-4 flex justify-end">
-            <Link
-              className={cn(buttonVariants({ variant: "default" }), "h-12 gap-2")}
-              href={returnHref}
-            >
-              Finalizar
-            </Link>
-          </div>
+        {onDismiss ? (
+          <Button aria-label="Cerrar secreto" className="size-10 shrink-0" onClick={onDismiss} type="button" variant="ghost">
+            <X className="size-4" aria-hidden="true" />
+          </Button>
         ) : null}
-      </CardContent>
+      </div>
+
+      <div className="space-y-5 p-5 sm:p-6">
+        <div className="flex items-start gap-3 rounded-md bg-zuno-warning-surface p-4 text-zuno-warning">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          <div>
+            <p className="text-sm font-semibold">Este secreto se muestra una sola vez</p>
+            <p className="mt-1 text-sm leading-6">Cópialo y guárdalo en un lugar seguro antes de salir. No podrás consultarlo de nuevo.</p>
+          </div>
+        </div>
+
+        <div className="min-w-0">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <h3 className="flex items-center gap-2 text-sm font-semibold">
+              <KeyRound className="size-4 text-muted-foreground" aria-hidden="true" />Client secret
+            </h3>
+            <Button aria-label={copied ? "Secreto copiado" : "Copiar secreto"} className="h-10" onClick={copySecret} type="button" variant="outline">
+              {copied ? <Check className="size-4" aria-hidden="true" /> : <Copy className="size-4" aria-hidden="true" />}
+              <span role="status">{copied ? "Secreto copiado" : "Copiar secreto"}</span>
+            </Button>
+          </div>
+          <p className="select-all break-all rounded-md border border-input bg-muted/40 p-4 font-mono text-sm leading-7 text-foreground sm:p-5">{secret.clientSecret}</p>
+          {copyError ? <p className="mt-2 text-sm text-destructive" role="alert">No se pudo copiar. Selecciona el secreto y cópialo manualmente.</p> : null}
+        </div>
+
+        {details.length ? (
+          <dl className="grid gap-4 border-t border-border pt-5 sm:grid-cols-2 lg:grid-cols-4">
+            {details.map((detail) => (
+              <div key={detail.label} className="min-w-0">
+                <dt className="text-xs text-muted-foreground">{detail.label}</dt>
+                <dd className="mt-1 break-all text-sm font-medium">{detail.value}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : null}
+      </div>
+
+      {returnHref ? (
+        <div className="flex flex-col gap-3 border-t border-border bg-muted/30 p-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <p className="text-xs leading-5 text-muted-foreground">Asegúrate de guardar el secreto antes de finalizar.</p>
+          <Button className="h-10 w-full shrink-0 sm:w-auto" render={<Link href={returnHref} />}>
+            Finalizar<ArrowRight className="size-4" aria-hidden="true" />
+          </Button>
+        </div>
+      ) : null}
     </Card>
   );
 }
