@@ -1,12 +1,18 @@
 {
   "name": "nextjs-nestjs",
   "private": true,
-  "workspaces": ["apps/*"],
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
     "dev": "bun run --filter '*' dev",
     "build": "bun run --filter '*' build",
     "dev:web": "bun run --cwd apps/web dev",
-    "dev:api": "bun run --cwd apps/api start:dev"
+    "dev:api": "bun run --cwd apps/api start:dev",
+    "test": "bun run test:api && bun run test:e2e && bun run test:web",
+    "test:api": "bun run --cwd apps/api test",
+    "test:e2e": "bun run --cwd apps/api test:e2e",
+    "test:web": "bun run --cwd apps/web test"
   },
   "dependencies": {
     "ioredis": "^5.11.1"

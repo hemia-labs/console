@@ -78,7 +78,7 @@ async function request<T>(
   method: string,
   path: string,
   body?: unknown,
-  options: ConsoleApiRequestOptions = {}
+  options: ConsoleApiRequestOptions = {},
 ): Promise<T> {
   const { headers, query, ...init } = options;
   const requestHeaders = new Headers(headers);
@@ -150,6 +150,9 @@ export const consoleApi = {
   },
   post<T>(path: string, body?: unknown, options?: ConsoleApiRequestOptions) {
     return request<T>("POST", path, body, options);
+  },
+  put<T>(path: string, body?: unknown, options?: ConsoleApiRequestOptions) {
+    return request<T>("PUT", path, body, options);
   },
 };
 

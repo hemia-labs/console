@@ -1,1 +1,1 @@
-export { ConsoleAdminGuard as SsoCurrentUserAuthGuard } from '../auth/console-admin.guard';
+export { ConsoleAdminGuard as SsoCurrentUserAuthGuard } from '../auth/authorization/console-admin.guard';

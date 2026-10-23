@@ -24,10 +24,6 @@ export const envVarsSchema = Joi.object({
     then: Joi.required(),
     otherwise: Joi.string().optional().allow(''),
   }),
-  HEMIA_ID_EXTERNAL_CLIENT_ID: Joi.string().optional().allow(''),
-  HEMIA_ID_EXTERNAL_CLIENT_SECRET: Joi.string().optional().allow(''),
-  HEMIA_ID_EXTERNAL_SCOPES: Joi.string().optional().allow(''),
-  HEMIA_ID_EXTERNAL_TOKEN_URL: Joi.string().default('/oauth/token'),
   SSO_ISSUER: Joi.string()
     .uri({ scheme: ['http', 'https'] })
     .optional(),
@@ -75,7 +71,8 @@ export const envVarsSchema = Joi.object({
     .default('http://localhost:3019'),
   ACCESS_TOKEN_URL: Joi.string()
     .uri({ scheme: ['http', 'https'] })
-    .default('http://localhost:4000/oauth/token'),
+    .empty('')
+    .optional(),
   ACCESS_CLIENT_ID: Joi.string().default('console-access-admin'),
   ACCESS_CLIENT_SECRET: Joi.string().when('NODE_ENV', {
     is: 'production',
@@ -93,15 +90,17 @@ export const envVarsSchema = Joi.object({
     .empty('')
     .optional(),
   ACCESS_AUDIENCE: Joi.string().empty('').default('access-api'),
+  LEGAL_API_URL: Joi.string()
+    .uri({ scheme: ['http', 'https'] })
+    .default('http://localhost:3017'),
+  LEGAL_ADMIN_CLIENT_ID: Joi.string().default('console-legal-admin'),
+  LEGAL_ADMIN_CLIENT_SECRET: Joi.string().optional().allow(''),
+  LEGAL_ADMIN_TOKEN_URL: Joi.string()
+    .uri({ scheme: ['http', 'https'] })
+    .optional(),
   PRODUCT_CODE: Joi.string().valid('console').empty('').default('console'),
   REDIS_HOST: Joi.string().default('localhost'),
   REDIS_PORT: Joi.number().integer().min(1).max(65535).default(6379),
   REDIS_PASSWORD: Joi.string().optional().allow(''),
   REDIS_DB: Joi.number().integer().min(0).default(0),
-  DB_HOST: Joi.string().required(),
-  DB_PORT: Joi.number().integer().min(1).max(65535).default(5432),
-  DB_USERNAME: Joi.string().required(),
-  DB_PASSWORD: Joi.string().required(),
-  DB_DATABASE: Joi.string().required(),
-  DB_LOGGING: Joi.boolean().default(false),
 });

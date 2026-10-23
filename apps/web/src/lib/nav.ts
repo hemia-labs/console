@@ -2,6 +2,8 @@ import type { LucideIcon } from "lucide-react";
 import { isLocale } from "@/i18n/config";
 import {
   Activity,
+  Network,
+  SlidersHorizontal,
   BadgeCheck,
   BriefcaseBusiness,
   Building2,
@@ -92,6 +94,30 @@ export const nav: NavItem[] = [
         label: "Invitations",
         description: "Invitaciones de acceso",
         icon: MailPlus,
+      },
+    ],
+  },
+  {
+    label: "Catálogos",
+    icon: Network,
+    children: [
+      {
+        href: "/catalogs/oauth-scopes",
+        label: "Scopes OAuth",
+        description: "Permisos de APIs y servicios",
+        icon: KeyRound,
+      },
+      {
+        href: "/catalogs/systems",
+        label: "Sistemas",
+        description: "Sistemas y configuración de capacidades",
+        icon: Network,
+      },
+      {
+        href: "/catalogs/system-capabilities",
+        label: "Capacidades",
+        description: "Esquemas y validaciones de configuración",
+        icon: SlidersHorizontal,
       },
     ],
   },
@@ -253,6 +279,15 @@ export function breadcrumbsFor(
           href: localizedHref(locale, `${matchedHref}/${suffix[0]}`),
           label: currentLabel || "Detalle",
         });
+      }
+      if (
+        match.item.href === "/catalogs/system-capabilities" &&
+        suffix.length > 1
+      ) {
+        items.push({ label: currentLabel || "Capacidad" });
+      }
+      if (match.item.href === "/catalogs/systems" && suffix.length > 1) {
+        items.push({ label: currentLabel || "Sistema" });
       }
       items.push({ label: titleFromSegment("edit") });
     } else {

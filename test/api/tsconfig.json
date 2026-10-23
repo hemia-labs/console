@@ -1,0 +1,32 @@
+{
+  "extends": "../../apps/api/tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "../..",
+    "baseUrl": "../../apps/api",
+    "typeRoots": [
+      "../../apps/api/node_modules/@types"
+    ],
+    "paths": {
+      "src/*": [
+        "src/*"
+      ],
+      "*": [
+        "node_modules/@types/*",
+        "node_modules/*"
+      ],
+      "@hemia/auth/nestjs": [
+        "node_modules/@hemia/auth/dist/nestjs/index.d.ts"
+      ]
+    },
+    "incremental": false
+  },
+  "include": [
+    "./**/*.ts",
+    "../../apps/api/src/**/*.ts"
+  ],
+  "exclude": [
+    "../../node_modules",
+    "../../apps/api/dist"
+  ]
+}

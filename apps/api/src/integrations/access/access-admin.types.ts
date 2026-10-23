@@ -1,11 +1,7 @@
-export type AccessAdminMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
+export type AccessAdminMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 export type AccessAdminQueryValue =
-  | string
-  | number
-  | boolean
-  | null
-  | undefined;
+  string | number | boolean | null | undefined;
 
 export interface AccessAdminRequestOptions {
   method: AccessAdminMethod;

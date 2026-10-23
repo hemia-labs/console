@@ -1,6 +1,6 @@
 import { Controller, Get, Header, UseGuards } from '@nestjs/common';
 import { CurrentUser, type CurrentUserPayload } from '@hemia/auth/nestjs';
-import { ConsoleAdminGuard } from './console-admin.guard';
+import { ConsoleAdminGuard } from './authorization/console-admin.guard';
 import { toConsoleUser, type ConsoleUser } from './console-user';
 
 @Controller('me')

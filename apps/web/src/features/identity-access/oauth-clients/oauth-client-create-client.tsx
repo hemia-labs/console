@@ -1,25 +1,43 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
+import { ConsoleDataLoader } from "@/features/auth/console-data-loader";
+import { getOAuthScopes } from "@/features/oauth-scopes/api";
 import { apiErrorMessage } from "@/features/identity-access/components/identity-api-error";
 import { createOAuthClient } from "./api";
 import { OAuthClientForm } from "./oauth-client-form";
 import { OneTimeSecretPanel } from "./one-time-secret-panel";
-import type { CreateOAuthClientPayload, OneTimeOAuthSecret, UpdateOAuthClientPayload } from "./types";
+import type {
+  CreateOAuthClientPayload,
+  OneTimeOAuthSecret,
+  UpdateOAuthClientPayload,
+} from "./types";
 
-export function OAuthClientCreateClient({ cancelHref }: { cancelHref: string }) {
+export function OAuthClientCreateClient({
+  cancelHref,
+}: {
+  cancelHref: string;
+}) {
+  const loadScopes = useCallback(
+    (signal: AbortSignal) => getOAuthScopes(signal),
+    [],
+  );
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [secret, setSecret] = useState<OneTimeOAuthSecret | null>(null);
 
-  async function handleSubmit(payload: CreateOAuthClientPayload | UpdateOAuthClientPayload) {
+  async function handleSubmit(
+    payload: CreateOAuthClientPayload | UpdateOAuthClientPayload,
+  ) {
     setError(null);
     setPending(true);
     setSecret(null);
 
     try {
-      const response = await createOAuthClient(payload as CreateOAuthClientPayload);
+      const response = await createOAuthClient(
+        payload as CreateOAuthClientPayload,
+      );
       if (response.clientSecret) {
         setSecret({
           audience: response.audience ?? payload.audience,
@@ -39,15 +57,25 @@ export function OAuthClientCreateClient({ cancelHref }: { cancelHref: string }) 
 
   return (
     <div className="space-y-5">
-      {secret ? <OneTimeSecretPanel returnHref={cancelHref} secret={secret} /> : null}
+      {secret ? (
+        <OneTimeSecretPanel returnHref={cancelHref} secret={secret} />
+      ) : null}
       {secret ? null : (
-        <OAuthClientForm
-          cancelHref={cancelHref}
-          error={error}
-          mode="create"
-          onSubmit={handleSubmit}
-          pending={pending}
-        />
+        <ConsoleDataLoader
+          load={loadScopes}
+          title="No se pudo cargar el catálogo de permisos"
+        >
+          {(scopeCatalog) => (
+            <OAuthClientForm
+              scopeCatalog={scopeCatalog}
+              cancelHref={cancelHref}
+              error={error}
+              mode="create"
+              onSubmit={handleSubmit}
+              pending={pending}
+            />
+          )}
+        </ConsoleDataLoader>
       )}
     </div>
   );

@@ -1,72 +1,42 @@
 # API (NestJS)
 
-Backend del monorepo `nextjs-nestjs`. Plantilla NestJS + TypeORM + PostgreSQL.
-La base de datos esta **activa** para auditoria local de Console API.
+Backend de Console: BFF administrativo para Hemia ID y Hemia Access.
+No requiere PostgreSQL ni guarda eventos de auditoría locales.
 
 ## Stack
 
-- **NestJS 11** — framework HTTP (módulos, controllers, services).
-- **TypeORM** — ORM + migraciones contra PostgreSQL.
-- **PostgreSQL** — base de datos (timezone `America/Mexico_City`).
-- **@nestjs/config** — configuración tipada por namespace (`registerAs`).
-- **class-validator / class-transformer** — validación de DTOs vía `ValidationPipe` global.
-- **TypeScript**, **Jest** (tests), **ESLint + Prettier**.
-- Gestor de paquetes: **bun**.
-
-## Estructura
-
-```
-apps/api/
-  data-source.ts                 # DataSource para el CLI de migraciones
-  src/
-    main.ts                      # bootstrap: ValidationPipe global + CORS, escucha PORT (3001)
-    app.module.ts                # módulo raíz (ConfigModule + DatabaseModule + features)
-    config/
-      database.config.ts         # config namespaced 'database' (registerAs)
-    database/
-      database.module.ts         # TypeOrmModule.forRootAsync, synchronize: false
-      migrations/                # migraciones TypeORM
-```
+- **NestJS 11**, TypeScript y `@nestjs/config`.
+- **Redis** para sesiones SSO, estado PKCE y coordinación de refresh de tokens.
+- **class-validator / class-transformer** para validar DTOs.
+- **Jest**, **ESLint + Prettier** y **bun**.
 
 ## Variables de entorno
 
-Copia `.env.example` a `.env` y completa los valores:
+Copia `.env.example` a `.env` y configura las URLs y credenciales de Hemia ID,
+Hemia Access y SSO. Configura Redis con `REDIS_HOST`, `REDIS_PORT`,
+`REDIS_PASSWORD` y `REDIS_DB`.
 
-```
-DB_HOST=localhost
-DB_PORT=5432
-DB_USERNAME=
-DB_PASSWORD=
-DB_DATABASE=
-DB_LOGGING=false
-```
+`PORT` es opcional (default `3016`). `.env` y `.env.local` están en `.gitignore`.
+No se requieren variables `DB_*` ni migraciones.
 
-`PORT` opcional (default `3001`). `.env` y `.env.local` están en `.gitignore`.
+El ejemplo conserva solo la configuración explícita habitual. Los endpoints OAuth
+se derivan de `HEMIA_ID_BASE_URL`: `/oauth/authorize`, `/oauth/token`,
+`/oauth/revoke`, `/oauth/logout` y `/.well-known/jwks.json`. Las claves públicas de
+Access se consultan en `${ACCESS_API_URL}/.well-known/jwks.json`.
+`ACCESS_TOKEN_URL` es opcional; sin override usa el endpoint de Identity.
+Los tres secretos corresponden a clientes distintos registrados en Identity:
+`console`, `console-identity-admin` y `console-access-admin`.
 
 ## Arranque
 
 ```bash
 bun install
-bun run --cwd apps/api start:dev   # watch mode
+bun run --cwd apps/api start:dev
 ```
 
-El servidor requiere PostgreSQL configurado. Para auditoria local, genera y corre la migracion
-correspondiente antes de usar endpoints que dependan de DB:
-
-```bash
-bun run --cwd apps/api migration:generate src/database/migrations/<Nombre>
-bun run --cwd apps/api migration:run
-```
-
-## Migraciones
-
-```bash
-bun run --cwd apps/api migration:generate src/database/migrations/<Nombre>
-bun run --cwd apps/api migration:run
-bun run --cwd apps/api migration:revert
-```
-
-`synchronize` está en `false`: todo cambio de schema requiere migración.
+Console requiere Redis y acceso a los servicios configurados de identidad y acceso.
+La eliminación de la auditoría local no borra tablas ni eventos ya existentes en
+una antigua base PostgreSQL; su conservación o eliminación se administra aparte.
 
 ## Tests y build
 
@@ -76,5 +46,8 @@ bun run --cwd apps/api test
 bun run --cwd apps/api test:e2e
 ```
 
-`test:e2e` usa Hemia ID y auditoria mockeados; no requiere PostgreSQL. `build` y runtime si validan
-`DB_*` porque la auditoria local esta activa.
+Las pruebas usan servicios upstream y Redis simulados.
+
+## Organización de pruebas y módulos
+
+Todas las pruebas del proyecto están en `../../test/`: API en `api/unit` y `api/e2e`, y frontend en `web`. Las configuraciones Jest y TypeScript de pruebas están junto a los tests. Los comandos de pruebas anteriores siguen funcionando. Los controladores y servicios de cada recurso se agrupan en carpetas dentro de su módulo, junto a sus DTOs y tipos específicos.

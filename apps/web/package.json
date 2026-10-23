@@ -6,8 +6,8 @@
     "dev": "next dev --port 5176",
     "build": "next build",
     "start": "next start --port 5176",
-    "lint": "eslint",
-    "test": "bun test"
+    "lint": "cd ../.. && apps/web/node_modules/.bin/eslint --config apps/web/eslint.config.mjs \"apps/web/src/**/*.{ts,tsx}\" \"test/web/**/*.{ts,tsx}\"",
+    "test": "bun test --tsconfig-override ../../test/web/tsconfig.json ../../test/web"
   },
   "dependencies": {
     "@base-ui/react": "1.8.0",
@@ -30,8 +30,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",
-    "typescript": "^5",
-    "zunoui": "0.1.0-alpha.2"
+    "typescript": "^5"
   },
   "ignoreScripts": [
     "sharp",

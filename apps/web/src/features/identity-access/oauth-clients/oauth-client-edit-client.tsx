@@ -6,6 +6,7 @@ import { useBreadcrumbTitle } from "@/components/breadcrumb-context";
 import { PageHeader } from "@/components/page-header";
 
 import { apiErrorMessage } from "@/features/identity-access/components/identity-api-error";
+import type { OAuthScope } from "@/features/oauth-scopes/types";
 import { updateOAuthClient } from "./api";
 import { OAuthClientForm } from "./oauth-client-form";
 import type {
@@ -17,9 +18,11 @@ import type {
 export function OAuthClientEditClient({
   cancelHref,
   client,
+  scopeCatalog,
 }: {
   cancelHref: string;
   client: IdentityOAuthClient;
+  scopeCatalog?: OAuthScope[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -31,7 +34,9 @@ export function OAuthClientEditClient({
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
-  async function handleSubmit(payload: CreateOAuthClientPayload | UpdateOAuthClientPayload) {
+  async function handleSubmit(
+    payload: CreateOAuthClientPayload | UpdateOAuthClientPayload,
+  ) {
     if (pending) return;
     setError(null);
     setPending(true);
@@ -49,9 +54,13 @@ export function OAuthClientEditClient({
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Editar cliente OAuth" description={`Actualiza la configuración de ${client.clientId}.`} />
+      <PageHeader
+        title="Editar cliente OAuth"
+        description={`Actualiza la configuración de ${client.clientId}.`}
+      />
       <OAuthClientForm
         cancelHref={cancelHref}
+        scopeCatalog={scopeCatalog}
         client={client}
         error={error}
         mode="edit"

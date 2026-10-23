@@ -9,7 +9,6 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AuditRequestContext } from '../../common/audit/audit-request-context';
 import {
   AccessAdminErrorPayload,
   AccessAdminRequestOptions,
@@ -32,10 +31,7 @@ export class AccessAdminClient {
   private cachedAccessToken?: string;
   private cachedAccessTokenExpiresAt = 0;
 
-  constructor(
-    private readonly config: ConfigService,
-    private readonly auditRequestContext: AuditRequestContext,
-  ) {}
+  constructor(private readonly config: ConfigService) {}
 
   async request<T>(options: AccessAdminRequestOptions): Promise<T> {
     const response = await this.executeRequest(options);
@@ -73,11 +69,6 @@ export class AccessAdminClient {
 
       if (!response.ok) {
         const payload = await this.readErrorPayload(response);
-        this.recordUpstreamCall(
-          options,
-          response,
-          typeof payload.trace_id === 'string' ? payload.trace_id : undefined,
-        );
         throw this.toHttpException(
           response.status,
           payload,
@@ -85,7 +76,6 @@ export class AccessAdminClient {
         );
       }
 
-      this.recordUpstreamCall(options, response);
       return response;
     } catch (error) {
       if (error instanceof HttpException) {
@@ -281,6 +271,10 @@ export class AccessAdminClient {
         return new NotFoundException(errorBody);
       case 409:
         return new ConflictException(errorBody);
+      case 413:
+      case 428:
+      case 429:
+        return new HttpException(errorBody, status);
       default:
         return new ServiceUnavailableException(errorBody);
     }
@@ -317,24 +311,6 @@ export class AccessAdminClient {
     return status >= 500
       ? 'Hemia Access API unavailable'
       : 'Hemia Access API request failed';
-  }
-
-  private recordUpstreamCall(
-    options: AccessAdminRequestOptions,
-    response: Response,
-    traceId?: string,
-  ): void {
-    this.auditRequestContext.addUpstreamCall({
-      source: 'admin',
-      service: 'access',
-      method: options.method,
-      path: options.path,
-      requestId:
-        response.headers.get('x-request-id') ??
-        response.headers.get('x-correlation-id') ??
-        undefined,
-      traceId: traceId ?? response.headers.get('x-trace-id') ?? undefined,
-    });
   }
 }
 

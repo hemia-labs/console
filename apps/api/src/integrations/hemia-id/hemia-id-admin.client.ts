@@ -5,15 +5,12 @@ import {
   HttpException,
   Injectable,
   NotFoundException,
-  Optional,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AuditRequestContext } from '../../common/audit/audit-request-context';
 import {
   HemiaIdAdminRequestOptions,
-  HemiaIdAdminResponse,
   HemiaIdAdminResponseWithMetadata,
   HemiaIdServiceTokenResponse,
 } from './hemia-id-admin.types';
@@ -37,10 +34,7 @@ export class HemiaIdAdminClient {
   private cachedServiceAccessToken?: string;
   private cachedServiceAccessTokenExpiresAt = 0;
 
-  constructor(
-    private readonly config: ConfigService,
-    @Optional() private readonly auditRequestContext?: AuditRequestContext,
-  ) {}
+  constructor(private readonly config: ConfigService) {}
 
   async request<T>(options: HemiaIdAdminRequestOptions): Promise<T> {
     const response = await this.executeRequest(options);
@@ -63,17 +57,6 @@ export class HemiaIdAdminClient {
     };
   }
 
-  async requestWithHeaders<T>(
-    options: HemiaIdAdminRequestOptions,
-  ): Promise<HemiaIdAdminResponse<T>> {
-    const response = await this.executeRequest(options);
-
-    return {
-      body: (await this.parseResponse(response)) as T,
-      setCookie: this.extractSetCookie(response),
-    };
-  }
-
   private async executeRequest(
     options: HemiaIdAdminRequestOptions,
   ): Promise<Response> {
@@ -89,11 +72,9 @@ export class HemiaIdAdminClient {
       });
 
       if (!response.ok) {
-        this.recordUpstreamCall(options, response);
         throw await this.toHttpException(response);
       }
 
-      this.recordUpstreamCall(options, response);
       return response;
     } catch (error) {
       if (error instanceof HttpException) {
@@ -121,7 +102,6 @@ export class HemiaIdAdminClient {
       });
 
       if (!response.ok) {
-        this.recordUpstreamCall(options, response);
         if ([401, 403].includes(response.status)) {
           throw new ServiceUnavailableException(
             'Identity administrative credentials rejected',
@@ -130,7 +110,6 @@ export class HemiaIdAdminClient {
         throw await this.toHttpException(response);
       }
 
-      this.recordUpstreamCall(options, response);
       return response;
     } catch (error) {
       if (error instanceof HttpException) {
@@ -197,6 +176,9 @@ export class HemiaIdAdminClient {
       const scope = this.config.get<string>('hemiaId.service.scopes');
       const body: Record<string, string> = {
         grant_type: 'client_credentials',
+        audience: 'identity-api',
+        resource: new URL(this.config.getOrThrow<string>('hemiaId.baseUrl'))
+          .origin,
         client_id: clientId,
         client_secret: clientSecret,
       };
@@ -330,26 +312,6 @@ export class HemiaIdAdminClient {
     return response.text();
   }
 
-  private extractSetCookie(response: Response): string[] {
-    const headers = response.headers as Headers & {
-      getSetCookie?: () => string[];
-      raw?: () => Record<string, string[]>;
-    };
-
-    const getSetCookie = headers.getSetCookie?.();
-    if (getSetCookie?.length) {
-      return getSetCookie;
-    }
-
-    const rawSetCookie = headers.raw?.()['set-cookie'];
-    if (rawSetCookie?.length) {
-      return rawSetCookie;
-    }
-
-    const setCookie = response.headers.get('set-cookie');
-    return setCookie ? [setCookie] : [];
-  }
-
   private extractMetadata(response: Response) {
     return {
       requestId:
@@ -357,19 +319,6 @@ export class HemiaIdAdminClient {
         response.headers.get('x-correlation-id') ??
         undefined,
     };
-  }
-
-  private recordUpstreamCall(
-    options: HemiaIdAdminRequestOptions,
-    response: Response,
-  ): void {
-    this.auditRequestContext?.addUpstreamCall({
-      source: 'admin',
-      service: 'hemia-id',
-      method: options.method,
-      path: options.path,
-      requestId: this.extractMetadata(response).requestId,
-    });
   }
 
   private async toHttpException(response: Response): Promise<HttpException> {
