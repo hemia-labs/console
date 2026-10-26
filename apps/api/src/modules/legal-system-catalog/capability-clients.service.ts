@@ -1,3 +1,4 @@
+import { loadApiScopes } from '../../integrations/hemia-id/oauth-catalog';
 import {
   BadRequestException,
   Injectable,
@@ -27,10 +28,7 @@ export class CapabilityClientsService {
   async create(req: ConsoleRequest, dto: CreateCapabilityClientDto) {
     const [definitions, catalog, choices] = await Promise.all([
       this.legal.request('GET', 'capabilities', req),
-      this.identity.requestService<unknown>({
-        method: 'GET',
-        path: '/oauth-scopes',
-      }),
+      loadApiScopes(this.identity),
       this.legal.request('GET', 'choices', req),
     ]);
     if (

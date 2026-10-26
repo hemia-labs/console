@@ -1,6 +1,6 @@
 "use client";
 import { CapabilityFunctionsForm } from "./capability-functions-form";
-import type { OAuthScope } from "@/features/oauth-scopes/types";
+import type { ApiScope } from "@/features/oauth-scopes/types";
 import Link from "next/link";
 import { useRef, useState, type FormEvent } from "react";
 import {
@@ -34,7 +34,7 @@ export function CapabilityForm({
   capability?: Capability;
   onSave: (v: Capability) => Promise<void>;
   cancelHref: string;
-  scopes?: OAuthScope[];
+  scopes?: ApiScope[];
   scopesHref?: string;
 }) {
   const [value, setValue] = useState<Capability>(

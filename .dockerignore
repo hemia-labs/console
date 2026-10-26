@@ -1,0 +1,17 @@
+**/node_modules
+**/dist
+**/.next
+**/coverage
+**/.git
+**/.env
+**/.env.*
+**/*.env
+**/*.pem
+**/*.key
+**/*.log
+**/*.tsbuildinfo
+.agents
+.claude
+vendor
+docs
+test

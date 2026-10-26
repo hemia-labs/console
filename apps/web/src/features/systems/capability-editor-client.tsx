@@ -1,6 +1,6 @@
 "use client";
-import { getOAuthScopes } from "@/features/oauth-scopes/api";
-import type { OAuthScope } from "@/features/oauth-scopes/types";
+import { getApiScopes } from "@/features/oauth-scopes/api";
+import type { ApiScope } from "@/features/oauth-scopes/types";
 import { localizedHref } from "@/lib/nav";
 
 import { useCallback, useEffect } from "react";
@@ -18,7 +18,7 @@ function CapabilityEditor({
 }: {
   capability?: Capability;
   listHref: string;
-  scopes: OAuthScope[];
+  scopes: ApiScope[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -59,7 +59,7 @@ export function CapabilityEditorClient({
     async (signal: AbortSignal) => {
       const [capability, scopes] = await Promise.all([
         code ? getCapability(code, signal) : Promise.resolve(undefined),
-        getOAuthScopes(signal),
+        getApiScopes(signal),
       ]);
       return { capability, scopes };
     },

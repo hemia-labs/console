@@ -1,0 +1,116 @@
+name: Console deployment
+run-name: Deploy Console ${{ inputs.release_tag }}
+
+on:
+  workflow_call:
+    inputs:
+      release_tag:
+        type: string
+        required: true
+      automatic:
+        type: boolean
+        default: false
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Published release, console-vMAJOR.MINOR.PATCH
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: console-prod
+  cancel-in-progress: false
+
+jobs:
+  enabled:
+    if: github.repository == 'hemia-labs/console' && github.ref == 'refs/heads/main'
+    environment: prod
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    outputs:
+      deploy: ${{ steps.check.outputs.deploy }}
+    steps:
+      - name: Check production deployment setting
+        id: check
+        env:
+          ENABLE_DEPLOY: ${{ vars.ENABLE_CONSOLE_DEPLOY }}
+          AUTOMATIC: ${{ inputs.automatic || false }}
+        run: |
+          if [[ "$ENABLE_DEPLOY" == 'true' ]]; then
+            echo 'deploy=true' >> "$GITHUB_OUTPUT"
+          elif [[ "$AUTOMATIC" == 'true' ]]; then
+            echo 'deploy=false' >> "$GITHUB_OUTPUT"
+            echo 'Release published; automatic deployment disabled in prod.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'ENABLE_CONSOLE_DEPLOY must be true' >&2
+            exit 1
+          fi
+
+  deploy:
+    needs: enabled
+    if: needs.enabled.outputs.deploy == 'true'
+    environment: prod
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ inputs.release_tag }}
+      REGISTRY_HOST: ${{ vars.REGISTRY_HOST }}
+      DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+      DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '22' }}
+      DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Download and verify the published release
+        run: |
+          set -euo pipefail
+          python3 - <<'PYCODE'
+          import os,re
+          assert re.fullmatch(r'console-v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)',os.environ['RELEASE_TAG'])
+          PYCODE
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" \
+            --jq 'if .draft or .prerelease or (.immutable != true) then error("Expected an immutable published stable release") else .tag_name end'
+          gh release download "$RELEASE_TAG" --dir "$RUNNER_TEMP/console-release" \
+            --pattern release.json --pattern compose.json --pattern console-deploy.py
+          python3 scripts/console-release.py validate "$RELEASE_TAG" "$RUNNER_TEMP/console-release"
+          python3 - <<'PYCODE'
+          import os,json,subprocess
+          from pathlib import Path
+          manifest=json.loads((Path(os.environ['RUNNER_TEMP'])/'console-release/release.json').read_text())
+          ref=json.loads(subprocess.check_output(['gh','api',f"repos/{os.environ['GITHUB_REPOSITORY']}/git/ref/tags/{os.environ['RELEASE_TAG']}"]))
+          assert ref['object']['type']=='commit' and ref['object']['sha']==manifest['revision'],'Tag and release commit differ'
+          comparison=json.loads(subprocess.check_output(['gh','api',f"repos/{os.environ['GITHUB_REPOSITORY']}/compare/{manifest['revision']}...main"]))
+          assert comparison['status'] in ['ahead','identical'],'Release commit is not on main'
+          PYCODE
+      - uses: tailscale/github-action@99a8333667fff04fdd6cffb46dfd409f8329a7bf # v4
+        with:
+          oauth-client-id: ${{ vars.TS_CLIENT_ID }}
+          audience: ${{ vars.TS_AUDIENCE }}
+          tags: tag:hemia-ci
+      - name: Deploy through pinned-host SSH
+        env:
+          PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          export DEPLOY_KEY_FILE="$RUNNER_TEMP/console-deploy-key"
+          export DEPLOY_KNOWN_HOSTS_FILE="$RUNNER_TEMP/console-known-hosts"
+          trap 'rm -f -- "$DEPLOY_KEY_FILE" "$DEPLOY_KNOWN_HOSTS_FILE"' EXIT
+          python3 - <<'PYCODE'
+          import os
+          from pathlib import Path
+          for key in ['REGISTRY_HOST','DEPLOY_HOST','DEPLOY_USER','DEPLOY_PATH','PRIVATE_KEY','KNOWN_HOSTS']:
+              assert os.environ.get(key), 'Missing '+key
+          for name,value in [('DEPLOY_KEY_FILE','PRIVATE_KEY'),('DEPLOY_KNOWN_HOSTS_FILE','KNOWN_HOSTS')]:
+              p=Path(os.environ[name]);p.write_text(os.environ[value]+'\n');p.chmod(0o600)
+          PYCODE
+          python3 scripts/console-remote.py "$RUNNER_TEMP/console-release"

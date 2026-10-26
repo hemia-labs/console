@@ -77,9 +77,21 @@ function setup() {
           (() => {
             if (path === '/oauth-clients')
               return [{ ...client, serviceDestinations: destinations }];
+            if (path === '/oauth-apis')
+              return [
+                {
+                  id: 'notifications',
+                  name: 'Notifications',
+                  audience: 'notifications-api',
+                  resource: 'https://notifications.test',
+                  enabled: true,
+                  scopes: ['notifications.read', 'notifications.send'],
+                },
+              ];
             if (path === '/oauth-scopes')
               return ['read', 'send'].map((code) => ({
                 code: `notifications.${code}`,
+                kind: 'api',
                 audience: 'notifications-api',
                 resource: 'https://notifications.test',
                 enabled: true,
@@ -468,14 +480,26 @@ test('subscription management independently generates only manage and its two re
   );
   const realIdentity = f.identity.requestService.getMockImplementation()!;
   f.identity.requestService.mockImplementation(async (arg) =>
-    arg.path === '/oauth-scopes'
-      ? required.map((code) => ({
-          code,
-          audience: 'billing-api',
-          resource: 'https://billing.test',
-          enabled: true,
-        }))
-      : realIdentity(arg),
+    arg.path === '/oauth-apis'
+      ? [
+          {
+            id: 'billing',
+            name: 'Billing',
+            audience: 'billing-api',
+            resource: 'https://billing.test',
+            enabled: true,
+            scopes: required,
+          },
+        ]
+      : arg.path === '/oauth-scopes'
+        ? required.map((code) => ({
+            code,
+            kind: 'api',
+            audience: 'billing-api',
+            resource: 'https://billing.test',
+            enabled: true,
+          }))
+        : realIdentity(arg),
   );
   await f.service.save(req, {
     ...draft,

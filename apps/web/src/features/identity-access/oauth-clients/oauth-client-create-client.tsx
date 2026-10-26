@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 
 import { ConsoleDataLoader } from "@/features/auth/console-data-loader";
-import { getOAuthScopes } from "@/features/oauth-scopes/api";
+import { getOAuthScopes, getOAuthApis } from "@/features/oauth-scopes/api";
 import { apiErrorMessage } from "@/features/identity-access/components/identity-api-error";
 import { createOAuthClient } from "./api";
 import { OAuthClientForm } from "./oauth-client-form";
@@ -19,10 +19,13 @@ export function OAuthClientCreateClient({
 }: {
   cancelHref: string;
 }) {
-  const loadScopes = useCallback(
-    (signal: AbortSignal) => getOAuthScopes(signal),
-    [],
-  );
+  const loadScopes = useCallback(async (signal: AbortSignal) => {
+    const [scopeCatalog, apiCatalog] = await Promise.all([
+      getOAuthScopes(signal),
+      getOAuthApis(signal),
+    ]);
+    return { scopeCatalog, apiCatalog };
+  }, []);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [secret, setSecret] = useState<OneTimeOAuthSecret | null>(null);
@@ -65,9 +68,10 @@ export function OAuthClientCreateClient({
           load={loadScopes}
           title="No se pudo cargar el catálogo de permisos"
         >
-          {(scopeCatalog) => (
+          {({ scopeCatalog, apiCatalog }) => (
             <OAuthClientForm
               scopeCatalog={scopeCatalog}
+              apiCatalog={apiCatalog}
               cancelHref={cancelHref}
               error={error}
               mode="create"

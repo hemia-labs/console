@@ -30,7 +30,7 @@ function ScopeList({
 }) {
   const [query, setQuery] = useState("");
   const visible = scopes.filter((s) =>
-    `${s.code} ${s.name} ${s.audience} ${s.description}`
+    `${s.code} ${s.name} ${s.description}`
       .toLowerCase()
       .includes(query.toLowerCase()),
   );
@@ -40,7 +40,7 @@ function ScopeList({
         className="h-10"
         type="search"
         aria-label="Buscar scopes"
-        placeholder="Buscar por nombre, código o API"
+        placeholder="Buscar por nombre o código"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
@@ -59,7 +59,7 @@ function ScopeList({
                 {scope.name}
               </h2>
               <p className="break-all font-mono text-xs text-muted-foreground">
-                {scope.code} · {scope.audience}
+                {scope.code}
               </p>
               {scope.description && (
                 <p className="text-sm text-muted-foreground">
@@ -68,7 +68,9 @@ function ScopeList({
               )}
               <p className="text-xs text-muted-foreground">
                 {scope.enabled ? "Habilitado" : "Deshabilitado"} ·{" "}
-                {scope.resource || "Sin URL de API para clientes de servicio"}
+                {scope.kind === "protocol"
+                  ? "Protocolo OAuth / OIDC"
+                  : "Permiso de API"}
               </p>
             </div>
             <Button
@@ -128,16 +130,20 @@ function ScopeForm({
   listHref: string;
 }) {
   const router = useRouter();
-  const [value, setValue] = useState<Omit<OAuthScope, "id">>(
-    () =>
-      scope ?? {
-        code: "",
-        audience: "",
-        name: "",
-        description: "",
-        resource: "",
-        enabled: true,
-      },
+  const [value, setValue] = useState<Omit<OAuthScope, "id" | "kind">>(() =>
+    scope
+      ? {
+          code: scope.code,
+          name: scope.name,
+          description: scope.description,
+          enabled: scope.enabled,
+        }
+      : {
+          code: "",
+          name: "",
+          description: "",
+          enabled: true,
+        },
   );
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -149,10 +155,7 @@ function ScopeForm({
     setPending(true);
     setError("");
     try {
-      await saveOAuthScope(
-        { ...value, resource: value.resource?.trim() || null },
-        scope?.id,
-      );
+      await saveOAuthScope(value, scope?.id);
       router.replace(listHref);
       router.refresh();
     } catch (cause) {
@@ -185,27 +188,20 @@ function ScopeForm({
               [
                 { key: "name", label: "Nombre", max: 200 },
                 { key: "code", label: "Código del scope", max: 160 },
-                { key: "audience", label: "Audiencia de la API", max: 160 },
-                { key: "resource", label: "URL de la API", max: 2048 },
               ] as const
             ).map((field) => (
               <Field
                 key={field.key}
                 id={`scope-${field.key}`}
                 label={field.label}
-                help={
-                  field.key === "resource"
-                    ? "Necesaria para crear clientes de servicio desde Sistemas."
-                    : undefined
-                }
               >
                 <Input
                   id={`scope-${field.key}`}
                   className="h-10"
-                  type={field.key === "resource" ? "url" : "text"}
-                  required={field.key !== "resource"}
+                  type="text"
+                  required
                   maxLength={field.max}
-                  readOnly={!!scope && ["code", "audience"].includes(field.key)}
+                  readOnly={!!scope && field.key === "code"}
                   value={value[field.key] ?? ""}
                   onChange={(e) =>
                     setValue((current) => ({
@@ -244,10 +240,6 @@ function ScopeForm({
               }
             />
           </div>
-          <p className="text-xs text-muted-foreground">
-            Deshabilitarlo impide nuevas selecciones; los permisos de los
-            clientes existentes se administran en Identity.
-          </p>
         </Card>
       </fieldset>
       <div className="flex justify-end gap-2">

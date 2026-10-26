@@ -38,6 +38,17 @@ import {
   oauthClientStatus,
 } from "./oauth-client-utils";
 
+const MAX_VISIBLE_ITEMS = 2;
+
+function MoreLabel({ count, noun, title }: { count: number; noun: string; title: string }) {
+  return (
+    <p className="text-xs font-medium text-muted-foreground" title={title}>
+      +{count} {noun}
+      {count === 1 ? "" : "s"} más
+    </p>
+  );
+}
+
 export function OAuthClientsTable({
   clients,
   locale,
@@ -76,12 +87,12 @@ export function OAuthClientsTable({
   return (
     <Table className="min-w-[1280px] table-fixed">
       <colgroup>
-        <col className="w-[16%]" />
+        <col className="w-[18%]" />
         <col className="w-[18%]" />
         <col className="w-[8%]" />
         <col className="w-[8%]" />
         <col className="w-[12%]" />
-        <col className="w-[20%]" />
+        <col className="w-[18%]" />
         <col className="w-[12%]" />
         <col className="w-[6%]" />
       </colgroup>
@@ -118,34 +129,47 @@ export function OAuthClientsTable({
           const id = oauthClientId(client);
           const status = oauthClientStatus(client);
           const pending = pendingClientId === id;
+          const destinations = client.serviceDestinations ?? [];
+          const extraDestinations = Math.max(destinations.length - MAX_VISIBLE_ITEMS, 0);
+          const scopes = destinations.length
+            ? Array.from(new Set(destinations.flatMap((destination) => destination.scopes)))
+            : (client.scopes ?? []);
+          const extraScopes = Math.max(scopes.length - MAX_VISIBLE_ITEMS, 0);
 
           return (
             <TableRow className="h-[72px] hover:bg-muted/30" key={id || client.clientId}>
               <TableCell className="px-4 py-3">
-                <div className="min-w-0">
-                  <Link
-                    className="block max-w-52 truncate text-sm font-semibold text-foreground hover:text-white hover:underline focus-visible:outline-2 focus-visible:outline-ring"
-                    title={client.clientId}
-                    href={localizedHref(locale, `/identity/oauth-clients/${id}`)}
-                  >
-                    {client.clientId}
-                  </Link>
-                  {id && id !== client.clientId ? (
-                    <p className="mt-1 max-w-52 truncate font-mono text-xs text-muted-foreground" title={id}>{id}</p>
-                  ) : null}
-                </div>
+                <Link
+                  className="block max-w-52 truncate text-sm font-semibold text-foreground hover:text-white hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                  title={client.clientId}
+                  href={localizedHref(locale, `/identity/oauth-clients/${id}`)}
+                >
+                  {client.clientId}
+                </Link>
               </TableCell>
-              <TableCell className="px-4 py-3 align-top whitespace-normal text-sm">
-                {client.serviceDestinations?.length ? (
-                  <ul className="space-y-3">
-                    {client.serviceDestinations.map((destination) => (
-                      <li key={destination.resource}>
-                        <p className="font-medium [overflow-wrap:anywhere]">{destination.audience}</p>
-                        <p className="mt-1 font-mono text-xs leading-5 [overflow-wrap:anywhere]">{destination.resource}</p>
-                      </li>
+              <TableCell className="px-4 py-3 text-sm">
+                {destinations.length ? (
+                  <div className="space-y-1">
+                    {destinations.slice(0, MAX_VISIBLE_ITEMS).map((destination) => (
+                      <p
+                        className="truncate font-medium"
+                        key={destination.resource}
+                        title={`${destination.audience} · ${destination.resource}`}
+                      >
+                        {destination.audience}
+                      </p>
                     ))}
-                  </ul>
-                ) : <p className="[overflow-wrap:anywhere]">{client.audience || "No disponible"}</p>}
+                    {extraDestinations > 0 ? (
+                      <MoreLabel
+                        count={extraDestinations}
+                        noun="destino"
+                        title={destinations
+                          .map((destination) => `${destination.audience} · ${destination.resource}`)
+                          .join("\n")}
+                      />
+                    ) : null}
+                  </div>
+                ) : <p className="truncate" title={client.audience}>{client.audience || "No disponible"}</p>}
               </TableCell>
               <TableCell className="px-4 py-3 text-sm text-muted-foreground">{client.type === "confidential" ? "Confidencial" : "Público"}</TableCell>
               <TableCell className="px-4 py-3">
@@ -154,23 +178,19 @@ export function OAuthClientsTable({
               <TableCell className="max-w-[220px] px-4 py-3 text-sm text-muted-foreground">
                 <p className="truncate" title={joinList(client.redirectUris)}>{joinList(client.redirectUris)}</p>
               </TableCell>
-              <TableCell className="px-4 py-3 align-top whitespace-normal text-sm text-muted-foreground">
-                {client.serviceDestinations?.length ? (
-                  <ul className="space-y-3">
-                    {client.serviceDestinations.map((destination) => (
-                      <li key={destination.resource}>
-                        <p className="text-xs font-medium text-foreground [overflow-wrap:anywhere]">{destination.audience}</p>
-                        <ul className="mt-1 space-y-1">
-                          {destination.scopes.length ? destination.scopes.map((scope) => (
-                            <li className="font-mono text-xs leading-5 [overflow-wrap:anywhere]" key={scope}>{scope}</li>
-                          )) : <li className="text-xs">Sin scopes</li>}
-                        </ul>
-                      </li>
+              <TableCell className="px-4 py-3 text-sm text-muted-foreground">
+                {scopes.length ? (
+                  <div className="space-y-1">
+                    {scopes.slice(0, MAX_VISIBLE_ITEMS).map((scope) => (
+                      <p className="truncate font-mono text-xs leading-5" key={scope} title={scope}>
+                        {scope}
+                      </p>
                     ))}
-                  </ul>
-                ) : <ul className="space-y-1">
-                  {client.scopes?.length ? client.scopes.map((scope) => <li className="font-mono text-xs leading-5 [overflow-wrap:anywhere]" key={scope}>{scope}</li>) : <li className="text-xs">Sin scopes</li>}
-                </ul>}
+                    {extraScopes > 0 ? (
+                      <MoreLabel count={extraScopes} noun="scope" title={scopes.join("\n")} />
+                    ) : null}
+                  </div>
+                ) : <p className="text-xs">Sin scopes</p>}
               </TableCell>
               <TableCell className="px-4 py-3 text-sm text-muted-foreground">
                 {oauthClientDate(client, "updated")}

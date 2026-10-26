@@ -1,5 +1,5 @@
 "use client";
-import { getOAuthScopes } from "@/features/oauth-scopes/api";
+import { getApiScopes } from "@/features/oauth-scopes/api";
 
 import { useCallback, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -64,7 +64,7 @@ export function SystemEditorClient({
         id ? getSystem(id, signal) : Promise.resolve(undefined),
         getCapabilities(signal),
         getSystemChoices(signal),
-        getOAuthScopes(signal),
+        getApiScopes(signal),
       ]);
       return { system, capabilities, choices: { ...choices, scopes } };
     },

@@ -1,5 +1,5 @@
 import {
-  type OAuthScope,
+  type ApiScope,
   type ScopeReference,
 } from "@/features/oauth-scopes/types";
 export type CapabilityField = {
@@ -58,7 +58,7 @@ export type SystemDraft = {
 export type System = SystemDraft & { id: string };
 export type CatalogChoices = {
   oauthIssuer?: string;
-  scopes: OAuthScope[];
+  scopes: ApiScope[];
   audiences: string[];
   verificationClientId: string;
   clients: {

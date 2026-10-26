@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ScopePicker } from "@/features/oauth-scopes/scope-picker";
-import type { OAuthScope } from "@/features/oauth-scopes/types";
+import type { OAuthScope, OAuthApi } from "@/features/oauth-scopes/types";
 import { AlertCircle, ChevronDown, Save, X } from "lucide-react";
 import type { FormEvent, ReactNode } from "react";
 import { useState } from "react";
@@ -82,13 +82,11 @@ const typeOptions: { label: string; value: OAuthClientType }[] = [
 function FormField({
   children,
   className,
-  help,
   htmlFor,
   label,
 }: {
   children: ReactNode;
   className?: string;
-  help?: string;
   htmlFor: string;
   label: string;
 }) {
@@ -98,14 +96,6 @@ function FormField({
         {label}
       </Label>
       {children}
-      {help ? (
-        <p
-          className="text-xs leading-5 text-muted-foreground"
-          id={`${htmlFor}-help`}
-        >
-          {help}
-        </p>
-      ) : null}
     </div>
   );
 }
@@ -159,7 +149,6 @@ function OAuthMultiSelect({
             />
           }
           disabled={disabled}
-          aria-describedby={`${id}-help`}
           id={id}
           type="button"
         >
@@ -288,9 +277,7 @@ export function initialState(
     redirectUris: formatLines(client?.redirectUris),
     requiresConsent: Boolean(client?.requiresConsent),
     responseTypes: client ? (client.responseTypes ?? []).map(String) : ["code"],
-    scopes: client
-      ? (client.scopes ?? []).map(String)
-      : ["openid", "profile", "email", "offline_access"],
+    scopes: client ? (client.scopes ?? []).map(String) : [],
     status: (client?.status as OAuthClientStatus | undefined) ?? "active",
     type: (client?.type as OAuthClientType | undefined) ?? "confidential",
   };
@@ -330,10 +317,13 @@ export function validateDestinationForm(
 ): string | null {
   if (!form.destinationMode) return null;
   if (
-    form.type !== "confidential" ||
-    !form.grantTypes.includes("client_credentials")
+    (form.grantTypes.includes("client_credentials") &&
+      form.type !== "confidential") ||
+    !form.grantTypes.some((grant) =>
+      ["authorization_code", "client_credentials"].includes(grant),
+    )
   )
-    return "Los permisos por destino requieren un cliente confidencial y el flujo client_credentials.";
+    return "Los permisos por API requieren authorization_code o client_credentials.";
   if (!form.serviceDestinations.length || form.serviceDestinations.length > 32)
     return "Agrega entre 1 y 32 destinos.";
   const resources = new Set<string>();
@@ -382,6 +372,7 @@ export function OAuthClientForm({
   onSubmit,
   pending,
   scopeCatalog = [],
+  apiCatalog = [],
 }: {
   cancelHref: string;
   client?: IdentityOAuthClient;
@@ -392,9 +383,17 @@ export function OAuthClientForm({
   ) => Promise<void>;
   pending?: boolean;
   scopeCatalog?: OAuthScope[];
+  apiCatalog?: OAuthApi[];
 }) {
   const [form, setForm] = useState<OAuthClientFormState>(() =>
     initialState(client),
+  );
+
+  const primaryApi = apiCatalog.find((api) => api.audience === form.audience);
+  const protocolCodes = new Set(
+    scopeCatalog
+      .filter((scope) => scope.kind === "protocol")
+      .map((scope) => scope.code),
   );
 
   const [destinationError, setDestinationError] = useState<string | null>(null);
@@ -434,43 +433,72 @@ export function OAuthClientForm({
               </p>
             </div>
             <div className="grid min-w-0 gap-5 sm:grid-cols-2">
-              <FormField
-                htmlFor="clientId"
-                label="ID del cliente *"
-                help="Identificador que la aplicación envía como client_id en OAuth."
-              >
+              <FormField htmlFor="clientId" label="ID del cliente *">
                 <Input
                   className="h-10 bg-card"
                   id="clientId"
-                  aria-describedby="clientId-help"
                   onChange={(event) => update("clientId", event.target.value)}
                   required
                   value={form.clientId}
                 />
               </FormField>
-              <FormField
-                htmlFor="audience"
-                label={form.destinationMode ? "Audiencia base *" : "Audience *"}
-                help={
-                  form.destinationMode
-                    ? "Se conserva para otros flujos OAuth. Cada token de servicio usa la audiencia de su destino."
-                    : "Identificador del recurso al que tendrá acceso la aplicación."
-                }
-              >
-                <Input
-                  className="h-10 bg-card"
+              <FormField htmlFor="audience" label="API principal *">
+                <select
                   id="audience"
-                  aria-describedby="audience-help"
-                  onChange={(event) => update("audience", event.target.value)}
                   required
+                  className="h-10 w-full rounded-md border border-input bg-card px-3 text-sm"
                   value={form.audience}
-                />
+                  onChange={(event) => {
+                    setForm((current) => ({
+                      ...current,
+                      audience: event.target.value,
+                      scopes: current.scopes.filter((code) =>
+                        scopeCatalog.some(
+                          (scope) =>
+                            scope.code === code && scope.kind === "protocol",
+                        ),
+                      ),
+                    }));
+                  }}
+                >
+                  <option value="">Selecciona una API</option>
+                  {apiCatalog
+                    .filter(
+                      (api) => api.enabled || api.audience === form.audience,
+                    )
+                    .map((api) => (
+                      <option key={api.id} value={api.audience}>
+                        {api.name} · {api.audience}
+                        {!api.enabled ? " · Deshabilitada" : ""}
+                      </option>
+                    ))}
+                  {form.audience &&
+                    !apiCatalog.some(
+                      (api) => api.audience === form.audience,
+                    ) && (
+                      <option value={form.audience}>
+                        {form.audience} (no registrada)
+                      </option>
+                    )}
+                </select>
               </FormField>
               <FormField
-                htmlFor="type"
-                label="Tipo"
-                help="Confidencial: usa un secreto. Público: no almacena un secreto."
+                htmlFor="primary-api-url"
+                label="URL de la API principal"
               >
+                <Input
+                  id="primary-api-url"
+                  className="h-10 bg-card"
+                  readOnly
+                  value={primaryApi?.resource ?? ""}
+                  placeholder={
+                    form.audience
+                      ? "URL pendiente en el catálogo de APIs"
+                      : "Selecciona una API principal"
+                  }
+                />
+              </FormField>
+              <FormField htmlFor="type" label="Tipo">
                 <Select
                   disabled={pending}
                   items={typeOptions}
@@ -479,11 +507,7 @@ export function OAuthClientForm({
                   }}
                   value={form.type}
                 >
-                  <SelectTrigger
-                    className="h-10 w-full bg-card"
-                    id="type"
-                    aria-describedby="type-help"
-                  >
+                  <SelectTrigger className="h-10 w-full bg-card" id="type">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -499,11 +523,7 @@ export function OAuthClientForm({
                   </SelectContent>
                 </Select>
               </FormField>
-              <FormField
-                htmlFor="status"
-                label="Estado"
-                help="Controla si la aplicación puede iniciar flujos OAuth."
-              >
+              <FormField htmlFor="status" label="Estado">
                 <Select
                   disabled={pending}
                   items={statusOptions}
@@ -512,11 +532,7 @@ export function OAuthClientForm({
                   }}
                   value={form.status}
                 >
-                  <SelectTrigger
-                    className="h-10 w-full bg-card"
-                    id="status"
-                    aria-describedby="status-help"
-                  >
+                  <SelectTrigger className="h-10 w-full bg-card" id="status">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -552,15 +568,10 @@ export function OAuthClientForm({
               </p>
             </div>
             <div className="min-w-0 space-y-5">
-              <FormField
-                htmlFor="redirectUris"
-                label="URLs de redirección"
-                help="Una URL por línea. También puedes separarlas por comas."
-              >
+              <FormField htmlFor="redirectUris" label="URLs de redirección">
                 <Textarea
                   className="min-h-28 bg-card font-mono text-sm"
                   id="redirectUris"
-                  aria-describedby="redirectUris-help"
                   onChange={(event) =>
                     update("redirectUris", event.target.value)
                   }
@@ -570,11 +581,7 @@ export function OAuthClientForm({
                 />
               </FormField>
               <div className="grid gap-5 sm:grid-cols-2">
-                <FormField
-                  htmlFor="grantTypes"
-                  label="Flujos permitidos"
-                  help="Grant types que podrá utilizar la aplicación."
-                >
+                <FormField htmlFor="grantTypes" label="Flujos permitidos">
                   <OAuthMultiSelect
                     disabled={pending}
                     id="grantTypes"
@@ -585,11 +592,7 @@ export function OAuthClientForm({
                     value={form.grantTypes}
                   />
                 </FormField>
-                <FormField
-                  htmlFor="responseTypes"
-                  label="Tipos de respuesta"
-                  help="Response types permitidos en las solicitudes OAuth."
-                >
+                <FormField htmlFor="responseTypes" label="Tipos de respuesta">
                   <OAuthMultiSelect
                     disabled={pending}
                     id="responseTypes"
@@ -601,33 +604,64 @@ export function OAuthClientForm({
                   />
                 </FormField>
               </div>
-              <FormField
-                htmlFor="scopes"
-                label={
-                  form.destinationMode
-                    ? "Scopes generales (otros flujos OAuth)"
-                    : "Permisos (scopes)"
-                }
-                help="Busca y selecciona permisos del catálogo para la audiencia configurada."
-              >
-                <ScopePicker
-                  id="scopes"
-                  disabled={pending}
-                  scopes={scopeCatalog.filter(
-                    (scope) => scope.audience === form.audience,
-                  )}
-                  value={form.scopes.map((code) => ({
-                    audience: form.audience,
-                    code,
-                  }))}
-                  onChange={(refs) =>
-                    update(
-                      "scopes",
-                      refs.map((ref) => ref.code),
-                    )
-                  }
-                />
-              </FormField>
+              {(
+                [
+                  {
+                    kind: "protocol",
+                    id: "protocol-scopes",
+                    label: "Scopes de autenticación",
+                  },
+                  {
+                    kind: "api",
+                    id: "scopes",
+                    label: "Permisos de la API principal",
+                  },
+                ] as const
+              ).map((group) => (
+                <FormField
+                  key={group.kind}
+                  htmlFor={group.id}
+                  label={group.label}
+                >
+                  <ScopePicker
+                    id={group.id}
+                    disabled={pending}
+                    scopes={scopeCatalog
+                      .filter(
+                        (scope) =>
+                          scope.kind === group.kind &&
+                          (group.kind === "protocol" ||
+                            (primaryApi?.enabled &&
+                              primaryApi.scopes.includes(scope.code))),
+                      )
+                      .map((scope) => ({
+                        ...scope,
+                        audience: form.audience,
+                        resource:
+                          group.kind === "api"
+                            ? (primaryApi?.resource ?? null)
+                            : null,
+                      }))}
+                    value={form.scopes
+                      .filter(
+                        (code) =>
+                          protocolCodes.has(code) ===
+                          (group.kind === "protocol"),
+                      )
+                      .map((code) => ({ code, audience: form.audience }))}
+                    onChange={(refs) =>
+                      update("scopes", [
+                        ...form.scopes.filter(
+                          (code) =>
+                            protocolCodes.has(code) !==
+                            (group.kind === "protocol"),
+                        ),
+                        ...refs.map((ref) => ref.code),
+                      ])
+                    }
+                  />
+                </FormField>
+              ))}
             </div>
           </section>
 
@@ -640,12 +674,11 @@ export function OAuthClientForm({
                 className="text-base font-semibold"
                 id="client-destinations-heading"
               >
-                Permisos por destino
+                Permisos por API
               </h2>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                Para clientes confidenciales con client_credentials. Los scopes
-                generales no autorizan tokens de servicio cuando este modelo
-                está habilitado.
+                Selecciona cada API y los permisos que podrá solicitar el
+                cliente. La audiencia y la URL provienen del catálogo de APIs.
               </p>
             </div>
             <div className="min-w-0 space-y-5">
@@ -658,7 +691,7 @@ export function OAuthClientForm({
                     setDestinationError(null);
                   }}
                 />
-                Usar permisos por destino
+                Autorizar APIs adicionales
               </label>
               {!form.destinationMode && form.hadServiceDestinations ? (
                 <p role="alert" className="text-sm text-destructive">
@@ -686,49 +719,73 @@ export function OAuthClientForm({
                         </h3>
                         <FormField
                           htmlFor={`resource-${index}`}
-                          label="URL del destino (resource) *"
-                          help="URL HTTP o HTTPS exacta que el servicio solicita a Identity."
+                          label="API autorizada *"
                         >
-                          <Input
-                            className="h-10 bg-card"
+                          <select
                             id={`resource-${index}`}
-                            aria-describedby={`resource-${index}-help`}
-                            type="url"
-                            maxLength={2048}
                             required
-                            value={destination.resource}
-                            onChange={(e) =>
-                              change({ resource: e.target.value })
-                            }
-                          />
-                        </FormField>
-                        <FormField
-                          htmlFor={`destination-audience-${index}`}
-                          label="Audiencia *"
-                        >
-                          <Input
-                            className="h-10 bg-card"
-                            id={`destination-audience-${index}`}
-                            maxLength={160}
-                            required
+                            className="h-10 w-full rounded-md border border-input bg-card px-3 text-sm"
                             value={destination.audience}
-                            onChange={(e) =>
-                              change({ audience: e.target.value })
-                            }
-                          />
+                            onChange={(event) => {
+                              const api = apiCatalog.find(
+                                (api) => api.audience === event.target.value,
+                              );
+                              change({
+                                audience: api?.audience ?? "",
+                                resource: api?.resource ?? "",
+                                scopes: [],
+                              });
+                            }}
+                          >
+                            <option value="">Selecciona una API</option>
+                            {apiCatalog
+                              .filter(
+                                (api) =>
+                                  (api.enabled && api.resource) ||
+                                  api.audience === destination.audience,
+                              )
+                              .map((api) => (
+                                <option key={api.id} value={api.audience}>
+                                  {api.name} · {api.audience}
+                                </option>
+                              ))}
+                            {destination.audience &&
+                              !apiCatalog.some(
+                                (api) => api.audience === destination.audience,
+                              ) && (
+                                <option value={destination.audience}>
+                                  {destination.audience} (no registrada)
+                                </option>
+                              )}
+                          </select>
+                          <p className="break-all text-xs text-muted-foreground">
+                            {destination.resource}
+                          </p>
                         </FormField>
                         <FormField
                           htmlFor={`destination-scopes-${index}`}
                           label="Scopes del destino"
-                          help="Busca permisos registrados para esta audiencia."
                         >
                           <ScopePicker
                             id={`destination-scopes-${index}`}
                             disabled={pending}
-                            scopes={scopeCatalog.filter(
-                              (scope) =>
-                                scope.audience === destination.audience,
-                            )}
+                            scopes={scopeCatalog
+                              .filter(
+                                (scope) =>
+                                  scope.kind === "api" &&
+                                  apiCatalog.some(
+                                    (api) =>
+                                      api.enabled &&
+                                      api.audience === destination.audience &&
+                                      api.resource === destination.resource &&
+                                      api.scopes.includes(scope.code),
+                                  ),
+                              )
+                              .map((scope) => ({
+                                ...scope,
+                                audience: destination.audience,
+                                resource: destination.resource,
+                              }))}
                             value={destination.scopes.map((code) => ({
                               audience: destination.audience,
                               code,
@@ -800,20 +857,12 @@ export function OAuthClientForm({
                 <Label id="requiresConsent-label" htmlFor="requiresConsent">
                   Solicitar consentimiento
                 </Label>
-                <p
-                  className="mt-1 text-xs leading-5 text-muted-foreground"
-                  id="requiresConsent-help"
-                >
-                  Muestra la solicitud de consentimiento al autorizar esta
-                  aplicación.
-                </p>
               </div>
               <div className="flex h-10 shrink-0 items-center">
                 <Switch
                   disabled={pending}
                   id="requiresConsent"
                   aria-labelledby="requiresConsent-label"
-                  aria-describedby="requiresConsent-help"
                   checked={form.requiresConsent}
                   onCheckedChange={(checked) =>
                     update("requiresConsent", checked)

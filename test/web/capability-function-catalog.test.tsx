@@ -6,6 +6,7 @@ import { SystemClientsForm } from "../../apps/web/src/features/systems/system-cl
 import { type CatalogChoices } from "../../apps/web/src/features/systems/types";
 const scope = {
   id: "scope",
+  kind: "api" as const,
   code: "notifications.messages.send",
   audience: "notifications-api",
   name: "Enviar mensajes",
@@ -79,4 +80,66 @@ test("system clients use any configured capability and function and offer Identi
   expect(html).toContain(scope.code);
   expect(html).not.toContain("Registrar aceptaciones");
   expect(html).not.toContain("Billing");
+});
+
+test("protocol scope labels show their code without suggesting an API audience", () => {
+  const html = renderToStaticMarkup(
+    <ScopePicker
+      id="protocol"
+      scopes={[
+        {
+          ...scope,
+          kind: "protocol",
+          code: "address",
+          name: "Dirección del usuario",
+          description: "Claims de dirección OIDC.",
+        },
+      ]}
+      value={[]}
+      onChange={() => {}}
+    />,
+  );
+  expect(html).not.toContain("Dirección del usuario");
+  expect(html).toContain("address");
+  expect(html).not.toContain("Scope:");
+  expect(html).not.toContain("API:");
+  expect(html).not.toContain(scope.audience);
+  expect(html).not.toContain("Claims de dirección OIDC.");
+});
+
+test("API scope labels distinguish the scope code from its audience", () => {
+  const html = renderToStaticMarkup(
+    <ScopePicker
+      id="api-permissions"
+      scopes={[scope]}
+      value={[]}
+      onChange={() => {}}
+    />,
+  );
+  expect(html).toContain(scope.code);
+  expect(html).not.toContain("Scope:");
+  expect(html).toContain(scope.audience);
+});
+
+test("scope codes matching their name are displayed only once", () => {
+  for (const kind of ["protocol", "api"] as const) {
+    const html = renderToStaticMarkup(
+      <ScopePicker
+        id="matching"
+        scopes={[
+          {
+            ...scope,
+            kind,
+            name: "address",
+            code: "address",
+            description: "Descripción",
+          },
+        ]}
+        value={[]}
+        onChange={() => {}}
+      />,
+    );
+    expect(html.match(/address/g)).toHaveLength(1);
+    expect(html.includes("Descripción")).toBe(kind === "api");
+  }
 });

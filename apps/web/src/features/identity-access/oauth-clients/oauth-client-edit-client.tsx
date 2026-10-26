@@ -6,7 +6,7 @@ import { useBreadcrumbTitle } from "@/components/breadcrumb-context";
 import { PageHeader } from "@/components/page-header";
 
 import { apiErrorMessage } from "@/features/identity-access/components/identity-api-error";
-import type { OAuthScope } from "@/features/oauth-scopes/types";
+import type { OAuthScope, OAuthApi } from "@/features/oauth-scopes/types";
 import { updateOAuthClient } from "./api";
 import { OAuthClientForm } from "./oauth-client-form";
 import type {
@@ -19,10 +19,12 @@ export function OAuthClientEditClient({
   cancelHref,
   client,
   scopeCatalog,
+  apiCatalog,
 }: {
   cancelHref: string;
   client: IdentityOAuthClient;
   scopeCatalog?: OAuthScope[];
+  apiCatalog?: OAuthApi[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -61,6 +63,7 @@ export function OAuthClientEditClient({
       <OAuthClientForm
         cancelHref={cancelHref}
         scopeCatalog={scopeCatalog}
+        apiCatalog={apiCatalog}
         client={client}
         error={error}
         mode="edit"

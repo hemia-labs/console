@@ -1,3 +1,4 @@
+import { loadApiScopes } from '../../integrations/hemia-id/oauth-catalog';
 import {
   BadRequestException,
   ConflictException,
@@ -17,7 +18,6 @@ import type {
   Capability,
   Destination,
   IdentityClient,
-  Scope,
   SystemDraft,
   SystemRecord,
 } from './system-contracts';
@@ -47,10 +47,7 @@ export class SystemOAuthService {
   async choices(req: ConsoleRequest) {
     const [choices, scopes] = await Promise.all([
       this.legal.request('GET', 'choices', req),
-      this.identity.requestService<Scope[]>({
-        method: 'GET',
-        path: '/oauth-scopes',
-      }),
+      loadApiScopes(this.identity),
     ]);
     if (!choices || typeof choices !== 'object' || !Array.isArray(scopes))
       throw new ServiceUnavailableException('Catálogo no disponible.');
@@ -152,10 +149,7 @@ export class SystemOAuthService {
       [
         this.clients(),
         this.legal.request('GET', 'capabilities', req) as Promise<Capability[]>,
-        this.identity.requestService<Scope[]>({
-          method: 'GET',
-          path: '/oauth-scopes',
-        }),
+        loadApiScopes(this.identity),
         this.legal.request('GET', 'choices', req) as Promise<{
           oauthIssuer: string;
           verificationClientId: string;

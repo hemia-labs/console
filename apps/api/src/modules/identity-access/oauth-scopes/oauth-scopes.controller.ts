@@ -1,3 +1,4 @@
+import { SaveOAuthScopeDto } from './oauth-catalog.dto';
 import {
   Body,
   Controller,
@@ -21,7 +22,7 @@ export class OAuthScopesController {
       path: '/oauth-scopes',
     });
   }
-  @Post() create(@Body() body: Record<string, unknown>) {
+  @Post() create(@Body() body: SaveOAuthScopeDto) {
     return this.identity.requestService({
       method: 'POST',
       path: '/oauth-scopes',
@@ -30,7 +31,7 @@ export class OAuthScopesController {
   }
   @Put(':id') update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: Record<string, unknown>,
+    @Body() body: SaveOAuthScopeDto,
   ) {
     return this.identity.requestService({
       method: 'PUT',

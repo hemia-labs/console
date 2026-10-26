@@ -10,3 +10,12 @@ roadmap_identity_access_hemia_id.md
 roadmap_frontend_hemia_console.md
 .agents/
 frontend_development_progress.md
+# Deployment secrets remain on the server.
+.env.production
+**/.env.production
+.env
+**/.env
+
+# Python deployment tooling.
+__pycache__/
+*.pyc
