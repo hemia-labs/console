@@ -39,14 +39,17 @@ class ReleaseTest(unittest.TestCase):
 
     def test_create_uses_no_secret_file_and_matches_package_version(self):
         images={s:c['image'] for s,c in self.compose['services'].items()}
+        version=json.loads((ROOT/'apps/api/package.json').read_text())['version']
+        tag='console-v'+version
+        wrong_tag='console-v'+str(int(version.split('.')[0])+1)+'.0.0'
         def command(args,**kwargs):
             if args[0]=='docker':
                 self.assertEqual(kwargs['env']['CONSOLE_API_ENV_FILE'],'/dev/null')
                 return json.dumps({'services':{s:{'image':'local','build':{}} for s in ['api','web']}})
             return 'b'*40
         with patch.object(release.subprocess,'check_output',side_effect=command),patch.dict(os.environ,REGISTRY_HOST=release.DEFAULT_REGISTRY,CONSOLE_PUBLIC_URL='https://console.hemia.cloud'):
-            release.create('console-v0.1.0',self.directory,images)
+            release.create(tag,self.directory,images)
         compose=json.loads((self.directory/'compose.json').read_text())
         self.assertEqual(compose['services']['api']['env_file'][0]['path'],'/dev/null')
         self.assertNotIn('build',compose['services']['api'])
-        with self.assertRaisesRegex(ValueError,'Tag differs'):release.create('console-v9.0.0',self.directory,images)
+        with self.assertRaisesRegex(ValueError,'Tag differs'):release.create(wrong_tag,self.directory,images)

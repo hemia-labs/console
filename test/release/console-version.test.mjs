@@ -36,6 +36,17 @@ test('real Changesets updates versions, lock and changelogs, then classifies the
   try {
     for (const path of ['apps/api', 'apps/web', '.changeset', 'scripts', 'bin']) mkdirSync(join(dir, path), { recursive: true });
     for (const path of ['package.json','bun.lock','apps/api/package.json','apps/web/package.json','.changeset/config.json','scripts/console-version.mjs','scripts/version-console.mjs']) copyFileSync(join(root,path),join(dir,path));
+    // Keep fixture versions independent of the version being released by this checkout.
+    let fixtureLock=readFileSync(join(dir,'bun.lock'),'utf8');
+    for(const name of ['api','web']) {
+      const path=join(dir,'apps',name,'package.json');
+      const pkg=JSON.parse(readFileSync(path));
+      const current=pkg.version;
+      pkg.version='0.1.0';
+      writeFileSync(path,JSON.stringify(pkg,null,2)+'\n');
+      fixtureLock=fixtureLock.replace(`"apps/${name}": {\n      "name": "${name}",\n      "version": "${current}"`, `"apps/${name}": {\n      "name": "${name}",\n      "version": "0.1.0"`);
+    }
+    writeFileSync(join(dir,'bun.lock'),fixtureLock);
     symlinkSync(join(root,'node_modules'),join(dir,'node_modules'),'dir');
     const git = (...args) => execFileSync('git',args,{cwd:dir,encoding:'utf8',stdio:'pipe'}).trim();
     git('init','-q','-b','main');
