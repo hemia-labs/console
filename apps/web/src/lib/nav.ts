@@ -102,6 +102,12 @@ export const nav: NavItem[] = [
     icon: Network,
     children: [
       {
+        href: "/catalogs/oauth-apis",
+        label: "APIs OAuth",
+        description: "Audiencias y permisos admitidos",
+        icon: Network,
+      },
+      {
         href: "/catalogs/oauth-scopes",
         label: "Scopes OAuth",
         description: "Permisos de APIs y servicios",

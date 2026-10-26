@@ -6,6 +6,7 @@ import { CreateCapabilityClientDto } from '../../../../apps/api/src/modules/lega
 import type { ConsoleRequest } from '../../../../apps/api/src/modules/auth/authorization/console-authorization.service';
 const req = {} as ConsoleRequest;
 const scope = {
+  kind: 'api',
   code: 'notifications.messages.send',
   audience: 'notifications-api',
   resource: 'https://notifications.example',
@@ -37,10 +38,19 @@ function fixture(catalog = [scope]) {
     ),
   };
   const identity = {
-    requestService: jest.fn((arg: { method: string }) =>
+    requestService: jest.fn((arg: { method: string; path: string }) =>
       Promise.resolve(
         arg.method === 'GET'
-          ? catalog
+          ? arg.path === '/oauth-scopes'
+            ? catalog
+            : catalog.map((s) => ({
+                id: 'notifications',
+                name: 'Notifications',
+                audience: s.audience,
+                resource: s.resource,
+                enabled: true,
+                scopes: [s.code],
+              }))
           : {
               id: 'created-id',
               clientId: dto.clientId,
@@ -97,13 +107,13 @@ test('unknown functions, disabled scopes and missing resource metadata prevent c
   ]) {
     const f = fixture(catalog as (typeof scope)[]);
     await expect(f.service.create(req, dto)).rejects.toThrow();
-    expect(f.identity.requestService).toHaveBeenCalledTimes(1);
+    expect(f.identity.requestService).toHaveBeenCalledTimes(2);
   }
   const f = fixture();
   await expect(
     f.service.create(req, { ...dto, roles: ['admin'] }),
   ).rejects.toThrow();
-  expect(f.identity.requestService).toHaveBeenCalledTimes(1);
+  expect(f.identity.requestService).toHaveBeenCalledTimes(2);
 });
 test('caller cannot override scopes, destinations, client type or audience', () => {
   const value = plainToInstance(CreateCapabilityClientDto, {

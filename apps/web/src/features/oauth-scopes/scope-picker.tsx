@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Input } from "@/components/zuno/input";
-import { scopeKey, type OAuthScope, type ScopeReference } from "./types";
+import { scopeKey, type ApiScope, type ScopeReference } from "./types";
 export function ScopePicker({
   id,
   scopes,
@@ -11,7 +11,7 @@ export function ScopePicker({
   requireResource = false,
 }: {
   id: string;
-  scopes: OAuthScope[];
+  scopes: ApiScope[];
   value: ScopeReference[];
   onChange: (refs: ScopeReference[]) => void;
   disabled?: boolean;
@@ -79,23 +79,26 @@ export function ScopePicker({
               />
               <span className="min-w-0 text-sm">
                 <span className="block break-words font-medium">
-                  {scope.name}
+                  {scope.kind === "protocol" ? scope.code : scope.name}
                   {!scope.enabled
                     ? " · Deshabilitado"
                     : requireResource && !scope.resource
                       ? " · Configura la URL de la API"
                       : ""}
                 </span>
-                <span className="block break-all font-mono text-xs text-muted-foreground">
-                  {scope.name !== scope.code && (
-                    <>
-                      {scope.code}
-                      {" · "}
-                    </>
+                {scope.kind === "api" &&
+                  (scope.name !== scope.code || scope.audience) && (
+                    <span className="block break-all font-mono text-xs text-muted-foreground">
+                      {scope.name !== scope.code && scope.code}
+                      {scope.kind === "api" && scope.audience && (
+                        <>
+                          {scope.name !== scope.code ? " · " : ""}
+                          {scope.audience}
+                        </>
+                      )}
+                    </span>
                   )}
-                  {scope.audience}
-                </span>
-                {scope.description && (
+                {scope.kind === "api" && scope.description && (
                   <span className="block text-xs text-muted-foreground">
                     {scope.description}
                   </span>

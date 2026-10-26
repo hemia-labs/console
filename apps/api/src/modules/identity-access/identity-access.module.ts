@@ -1,3 +1,4 @@
+import { OAuthApisController } from './oauth-scopes/oauth-apis.controller';
 import { OAuthScopesController } from './oauth-scopes/oauth-scopes.controller';
 import { Module } from '@nestjs/common';
 import { HemiaIdModule } from '../../integrations/hemia-id/hemia-id.module';
@@ -16,6 +17,7 @@ import { UsersService } from './users/users.service';
   imports: [HemiaIdModule, AuthModule],
   controllers: [
     OAuthScopesController,
+    OAuthApisController,
     IdentityAccessController,
     UsersController,
     OAuthClientsController,

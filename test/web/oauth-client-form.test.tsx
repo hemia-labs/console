@@ -6,6 +6,7 @@ import {
   buildPayload,
   validateDestinationForm,
 } from "../../apps/web/src/features/identity-access/oauth-clients/oauth-client-form";
+import { resolveApiScopes } from "../../apps/web/src/features/oauth-scopes/types";
 import { addOAuthScope } from "../../apps/web/src/features/identity-access/oauth-clients/oauth-client-utils";
 import type { IdentityOAuthClient } from "../../apps/web/src/features/identity-access/oauth-clients/types";
 
@@ -37,8 +38,127 @@ describe("OAuth client editing", () => {
     expect(html).toContain("Selecciona los flujos");
     expect(html).toContain("Selecciona los tipos de respuesta");
     expect(html).toContain("Buscar por nombre, scope o API");
-    expect(html).not.toContain("offline_access");
+    expect(html).toContain("0 seleccionados");
     expect(html).not.toContain("authorization_code");
+  });
+
+  test("does not invent or preselect protocol scopes when the catalog is empty", () => {
+    const html = renderToStaticMarkup(
+      <OAuthClientForm
+        cancelHref="/es/identity/oauth-clients"
+        mode="create"
+        onSubmit={async () => {}}
+      />,
+    );
+    expect(initialState().scopes).toEqual([]);
+    expect(html).not.toContain("openid");
+    expect(html).toContain("0 seleccionados");
+  });
+  test("shows protocol scopes once from Identity and only the primary API's permissions", () => {
+    const html = renderToStaticMarkup(
+      <OAuthClientForm
+        client={client}
+        cancelHref="/"
+        mode="edit"
+        onSubmit={async () => {}}
+        scopeCatalog={[
+          {
+            id: "oidc",
+            code: "openid",
+            name: "Iniciar sesión",
+            description: "",
+            kind: "protocol",
+            enabled: true,
+          },
+          {
+            id: "read",
+            code: "console.read",
+            name: "Leer consola",
+            description: "",
+            kind: "api",
+            enabled: true,
+          },
+          {
+            id: "bill",
+            code: "billing.read",
+            name: "Leer billing",
+            description: "",
+            kind: "api",
+            enabled: true,
+          },
+        ]}
+        apiCatalog={[
+          {
+            id: "console",
+            name: "Console",
+            audience: "console-api",
+            resource: "https://console",
+            scopes: ["console.read"],
+            enabled: true,
+          },
+        ]}
+      />,
+    );
+    expect(html.match(/openid/g)).toHaveLength(1);
+    expect(html).toContain("Leer consola");
+    expect(html).not.toContain("Leer billing");
+    expect(html).toContain("API principal");
+    expect(html).toContain('id="primary-api-url"');
+    expect(html).toContain('value="https://console"');
+    const protocolSection = html.slice(
+      html.indexOf('for="protocol-scopes"'),
+      html.indexOf('for="scopes"'),
+    );
+    const apiSection = html.slice(html.indexOf('for="scopes"'));
+    expect(protocolSection).toContain("openid");
+    expect(protocolSection).not.toContain("Leer consola");
+    expect(apiSection).toContain("Leer consola");
+    expect(apiSection).not.toContain("Iniciar sesión");
+    expect(html).not.toContain('type="text" id="audience"');
+  });
+  test("resolves API context without cloning protocol definitions", () => {
+    const refs = resolveApiScopes(
+      [
+        {
+          id: "oidc",
+          code: "openid",
+          name: "Login",
+          description: "",
+          kind: "protocol",
+          enabled: true,
+        },
+        {
+          id: "read",
+          code: "read",
+          name: "Read",
+          description: "",
+          kind: "api",
+          enabled: true,
+        },
+      ],
+      [
+        {
+          id: "one",
+          name: "One",
+          audience: "one-api",
+          resource: "https://one",
+          enabled: true,
+          scopes: ["read"],
+        },
+        {
+          id: "two",
+          name: "Two",
+          audience: "two-api",
+          resource: "https://two",
+          enabled: false,
+          scopes: ["read"],
+        },
+      ],
+    );
+    expect(refs.map((s) => [s.code, s.audience, s.enabled])).toEqual([
+      ["read", "one-api", true],
+      ["read", "two-api", false],
+    ]);
   });
 
   test("retains existing custom scopes and OAuth response combinations", () => {
@@ -168,7 +288,7 @@ describe("OAuth destination model", () => {
         ],
       },
       { type: "public" as const },
-      { grantTypes: ["authorization_code"] },
+      { grantTypes: ["refresh_token"] },
     ])
       expect(validateDestinationForm({ ...state, ...invalid })).not.toBeNull();
   });

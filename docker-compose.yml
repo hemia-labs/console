@@ -1,0 +1,83 @@
+name: hemia-console
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  api:
+    image: hemia-console-api:${CONSOLE_IMAGE_TAG:-local}
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      args:
+        CONSOLE_REVISION: ${CONSOLE_REVISION:-local}
+    env_file:
+      - path: ${CONSOLE_API_ENV_FILE:-./apps/api/.env.production}
+        format: raw
+    environment:
+      NODE_ENV: production
+      PORT: "3016"
+      NODE_OPTIONS: --max-old-space-size=256
+    ports:
+      - "${CONSOLE_BIND_ADDRESS:-127.0.0.1}:${CONSOLE_API_PORT:-3016}:3016"
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    restart: unless-stopped
+    init: true
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 128
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    logging: *logging
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3016/health/ready', {signal: AbortSignal.timeout(4000)}).then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  web:
+    image: hemia-console-web:${CONSOLE_IMAGE_TAG:-local}
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        CONSOLE_REVISION: ${CONSOLE_REVISION:-local}
+        NEXT_PUBLIC_CONSOLE_API_BASE_URL: ${CONSOLE_PUBLIC_URL:-https://console.hemia.cloud}
+        NEXT_PUBLIC_SSO_COOKIE_NAME: ${CONSOLE_COOKIE_NAME:-console_session}
+    environment:
+      NODE_ENV: production
+      PORT: "5176"
+      HOSTNAME: 0.0.0.0
+      NODE_OPTIONS: --max-old-space-size=128
+      NEXT_TELEMETRY_DISABLED: "1"
+    ports:
+      - "${CONSOLE_BIND_ADDRESS:-127.0.0.1}:${CONSOLE_WEB_PORT:-5176}:5176"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    init: true
+    mem_limit: 256m
+    cpus: 0.5
+    pids_limit: 64
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+      - /app/apps/web/.next/cache:size=16m,mode=1777
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    logging: *logging
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:5176/api/health', {signal: AbortSignal.timeout(4000)}).then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3

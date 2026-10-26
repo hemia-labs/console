@@ -5,7 +5,7 @@ import { Button } from "@/components/zuno/button";
 import { Input } from "@/components/zuno/input";
 import { Card } from "@/components/zuno/card";
 import { ScopePicker } from "@/features/oauth-scopes/scope-picker";
-import type { OAuthScope } from "@/features/oauth-scopes/types";
+import type { ApiScope } from "@/features/oauth-scopes/types";
 import { Field } from "./catalog-fields";
 import type { CapabilityFunction } from "./types";
 export function CapabilityFunctionsForm({
@@ -16,7 +16,7 @@ export function CapabilityFunctionsForm({
   scopesHref,
 }: {
   functions: CapabilityFunction[];
-  scopes: OAuthScope[];
+  scopes: ApiScope[];
   onChange: (value: CapabilityFunction[]) => void;
   disabled?: boolean;
   scopesHref?: string;

@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 import { ConsoleDataLoader } from "@/features/auth/console-data-loader";
-import { getOAuthScopes } from "@/features/oauth-scopes/api";
+import { getOAuthScopes, getOAuthApis } from "@/features/oauth-scopes/api";
 import { getOAuthClient } from "./api";
 import { OAuthClientEditClient } from "./oauth-client-edit-client";
 
@@ -15,11 +15,12 @@ export function OAuthClientEditData({
 }) {
   const load = useCallback(
     async (signal: AbortSignal) => {
-      const [client, scopeCatalog] = await Promise.all([
+      const [client, scopeCatalog, apiCatalog] = await Promise.all([
         getOAuthClient(id, { signal }),
         getOAuthScopes(signal),
+        getOAuthApis(signal),
       ]);
-      return { client, scopeCatalog };
+      return { client, scopeCatalog, apiCatalog };
     },
     [id],
   );

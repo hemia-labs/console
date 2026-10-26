@@ -14,6 +14,7 @@ async function bootstrap() {
   app.use(cookieParser()); // SsoAuthGuard reads req.cookies
   app.useGlobalFilters(new ConsoleSsoExceptionFilter());
   app.enableCors(buildAppCorsOptions(config));
+  app.enableShutdownHooks();
   await app.listen(config.get<number>('app.port') ?? 3016);
 }
 void bootstrap();

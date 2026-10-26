@@ -45,7 +45,6 @@ Estado actual:
 
 Documentos de seguimiento:
 
-- [SSO y autorización vigente](docs/sso-console.md)
 - [API administrativa](apps/api/README.md)
 
 ## Estructura
@@ -77,3 +76,18 @@ El BFF exige administrador de plataforma y reutiliza su credencial `console-iden
 `GET /legal/system-catalog/connections/options` devuelve sistemas/capacidades/opciones de identidad. `/connections/options/payments` y `/connections/options/legal` cargan los catálogos de dominio a demanda. `POST /connections/activate` recibe funciones y configuración aplicable, con bloques de pagos/aceptaciones únicamente cuando se requieren. Valida antes de escribir y rechaza ampliaciones implícitas de permisos sobre otros productos del mismo cliente.
 
 El resultado distingue `configured` (guardado, sin prueba operativa), `verified` (comprobación del backend completada) y `pending` (paso pendiente, reintentable). Solo `verified` devuelve `ready: true`. La configuración generada `PAYMENTS_CONNECTION` no contiene secretos; el consumidor usa `@hemia/payments` y `HEMIA_CLIENT_SECRET` desde su despliegue. Las operaciones de lectura no requieren URLs de retorno; `checkout.create` sí las exige. La configuración y su secreto deben estar instalados antes de comprobar el backend.
+
+## Despliegue
+
+API y web tienen imágenes Docker y usan Redis externo. GitHub Actions valida los cambios; al mergear a `main`, se crea o actualiza una PR de versión. Al mergear esa PR, se publican tag, GitHub Release e imágenes y se despliega automáticamente si `ENABLE_CONSOLE_DEPLOY=true`.
+
+### Versiones y releases
+
+Incluye un changeset con `bun run changeset` en cada PR que requiera una nueva versión. API y web comparten versión; no se publican a npm. La nota inicial prepara la primera release `console-v0.2.0`.
+
+- PR a `main`: lint, tests, builds y smoke Docker.
+- Merge funcional: validaciones y PR `changeset-release/console` con versiones, changelogs y lockfile actualizados. CI se dispara explícitamente para esa rama cuando la PR la crea `GITHUB_TOKEN`.
+- Merge de la PR de versión: vuelve a validar, publica imágenes por digest, crea tag `console-vX.Y.Z` y release inmutable con assets, y despliega ese bundle vía SSH. No reconstruye durante el despliegue.
+- `Console release` permite reintentar la publicación de la versión actual mediante `release_tag`. `Console deployment` permite volver a desplegar un tag publicado, sin volver a publicar ni construir imágenes.
+
+El environment `prod` conserva los secretos y `ENABLE_CONSOLE_DEPLOY`. El repositorio debe permitir que Actions cree PRs y tener activada la inmutabilidad de releases. Se usa `GITHUB_TOKEN` con permisos por job; no requiere un token personal adicional. Las releases verifican commit, checksums e imágenes; los reintentos no reemplazan assets ni tags existentes.
