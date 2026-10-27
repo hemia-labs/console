@@ -1,5 +1,11 @@
 # web
 
+## 0.4.0
+
+### Minor Changes
+
+- 481528c: Allow authenticated Console operators to perform actions without role restrictions through a reversible configuration mode. Forward Access actions as the current user and provide invitation list and creation pages.
+
 ## 0.3.0
 
 ### Minor Changes
