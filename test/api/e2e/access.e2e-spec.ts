@@ -7,10 +7,13 @@ import { createAccessTestingModule } from './utils/create-access-testing-module'
 
 describe('Access proxy (e2e)', () => {
   let app: INestApplication<App>;
-  let accessAdminClient: { request: jest.Mock };
+  let accessAdminClient: { request: jest.Mock; requestAsUser: jest.Mock };
 
   beforeEach(async () => {
-    accessAdminClient = { request: jest.fn().mockResolvedValue({ ok: true }) };
+    accessAdminClient = {
+      request: jest.fn().mockResolvedValue({ ok: true }),
+      requestAsUser: jest.fn().mockResolvedValue({ ok: true }),
+    };
 
     const moduleFixture: TestingModule = await createAccessTestingModule()
       .overrideProvider(AccessAdminClient)
@@ -139,10 +142,13 @@ describe('Access proxy (e2e)', () => {
       path: `/v1/organizations/${organizationId}/products/horus/enable`,
       body: { source: 'manual' },
     });
-    expect(accessAdminClient.request).toHaveBeenNthCalledWith(2, {
-      method: 'POST',
-      path: `/v1/organizations/${organizationId}/invitations`,
-      body: { email: 'user@acme.com' },
-    });
+    expect(accessAdminClient.requestAsUser).toHaveBeenCalledWith(
+      {
+        method: 'POST',
+        path: `/v1/organizations/${organizationId}/invitations`,
+        body: { email: 'user@acme.com' },
+      },
+      'exchanged-user-token',
+    );
   });
 });

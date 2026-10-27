@@ -18,6 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import { apiErrorMessage } from "@/features/identity-access/components/identity-api-error";
 import { localizedHref } from "@/lib/nav";
 import { changeOrganizationStatus, updateOrganization } from "./api";
+import { OrganizationInvitationsSection } from "./organization-invitations-section";
 import { OrganizationForm } from "./organization-form";
 import { OrganizationProductsSection } from "./organization-products-section";
 import { OrganizationStatusBadge } from "./organization-status-badge";
@@ -34,7 +35,7 @@ function dateLabel(value?: string | null) {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString("es-MX");
 }
 
-const futureTabs = ["Memberships", "Roles y permisos", "Invitations"];
+const futureTabs = ["Memberships", "Roles y permisos"];
 
 export function OrganizationDetailClient({
   initialError,
@@ -255,6 +256,8 @@ export function OrganizationDetailClient({
           title="Overview de organización"
         />
       </section>
+
+      <OrganizationInvitationsSection key={organization.id} organizationId={organization.id} />
 
       <OrganizationProductsSection
         organizationProductsError={organizationProductsError}

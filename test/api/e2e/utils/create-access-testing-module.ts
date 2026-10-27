@@ -22,7 +22,10 @@ export const createAccessTestingModule = () =>
     ],
   })
     .overrideProvider(ConsoleAuthorizationService)
-    .useValue({ authorize: jest.fn().mockResolvedValue(undefined) })
+    .useValue({
+      authorize: jest.fn().mockResolvedValue(undefined),
+      accessTokenFor: jest.fn().mockResolvedValue('exchanged-user-token'),
+    })
     .overrideProvider(REDIS)
     .useValue({
       del: jest.fn().mockResolvedValue(1),

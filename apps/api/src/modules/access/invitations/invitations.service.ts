@@ -6,39 +6,58 @@ import { CreateInvitationDto } from '../dtos/access.dto';
 export class InvitationsService {
   constructor(private readonly accessAdminClient: AccessAdminClient) {}
 
-  create(organizationId: string, dto: CreateInvitationDto): Promise<unknown> {
-    return this.accessAdminClient.request({
-      method: 'POST',
-      path: `/v1/organizations/${organizationId}/invitations`,
-      body: dto,
-    });
+  create(
+    organizationId: string,
+    dto: CreateInvitationDto,
+    accessToken: string,
+  ): Promise<unknown> {
+    return this.accessAdminClient.requestAsUser(
+      {
+        method: 'POST',
+        path: `/v1/organizations/${organizationId}/invitations`,
+        body: dto,
+      },
+      accessToken,
+    );
   }
 
-  findAll(organizationId: string): Promise<unknown> {
-    return this.accessAdminClient.request({
-      method: 'GET',
-      path: `/v1/organizations/${organizationId}/invitations`,
-    });
+  findAll(organizationId: string, accessToken: string): Promise<unknown> {
+    return this.accessAdminClient.requestAsUser(
+      {
+        method: 'GET',
+        path: `/v1/organizations/${organizationId}/invitations`,
+      },
+      accessToken,
+    );
   }
 
-  findOne(invitationId: string): Promise<unknown> {
-    return this.accessAdminClient.request({
-      method: 'GET',
-      path: `/v1/invitations/${invitationId}`,
-    });
+  findOne(invitationId: string, accessToken: string): Promise<unknown> {
+    return this.accessAdminClient.requestAsUser(
+      {
+        method: 'GET',
+        path: `/v1/invitations/${invitationId}`,
+      },
+      accessToken,
+    );
   }
 
-  revoke(invitationId: string): Promise<unknown> {
-    return this.accessAdminClient.request({
-      method: 'POST',
-      path: `/v1/invitations/${invitationId}/revoke`,
-    });
+  revoke(invitationId: string, accessToken: string): Promise<unknown> {
+    return this.accessAdminClient.requestAsUser(
+      {
+        method: 'POST',
+        path: `/v1/invitations/${invitationId}/revoke`,
+      },
+      accessToken,
+    );
   }
 
-  resend(invitationId: string): Promise<unknown> {
-    return this.accessAdminClient.request({
-      method: 'POST',
-      path: `/v1/invitations/${invitationId}/resend`,
-    });
+  resend(invitationId: string, accessToken: string): Promise<unknown> {
+    return this.accessAdminClient.requestAsUser(
+      {
+        method: 'POST',
+        path: `/v1/invitations/${invitationId}/resend`,
+      },
+      accessToken,
+    );
   }
 }

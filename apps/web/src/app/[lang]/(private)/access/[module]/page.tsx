@@ -3,10 +3,6 @@ import { notFound } from "next/navigation";
 import { ModulePlaceholder } from "@/components/module-placeholder";
 
 const modules = {
-  invitations: {
-    description: "Ruta reservada para administrar invitaciones de acceso.",
-    title: "Invitations",
-  },
   memberships: {
     description: "Ruta reservada para administrar memberships de organizations.",
     title: "Memberships",
