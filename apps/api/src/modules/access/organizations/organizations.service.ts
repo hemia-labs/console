@@ -11,56 +11,79 @@ import {
 export class OrganizationsService {
   constructor(private readonly accessAdminClient: AccessAdminClient) {}
 
-  findAll(query: ListOrganizationsQueryDto): Promise<unknown> {
-    return this.accessAdminClient.request({
-      method: 'GET',
-      path: '/v1/organizations',
-      query: query as Record<string, AccessAdminQueryValue>,
-    });
+  findAll(
+    query: ListOrganizationsQueryDto,
+    accessToken: string,
+  ): Promise<unknown> {
+    return this.accessAdminClient.requestAsUser(
+      {
+        method: 'GET',
+        path: '/v1/organizations',
+        query: query as Record<string, AccessAdminQueryValue>,
+      },
+      accessToken,
+    );
   }
 
-  findOne(organizationId: string): Promise<unknown> {
-    return this.accessAdminClient.request({
-      method: 'GET',
-      path: `/v1/organizations/${organizationId}`,
-    });
+  findOne(organizationId: string, accessToken: string): Promise<unknown> {
+    return this.accessAdminClient.requestAsUser(
+      {
+        method: 'GET',
+        path: `/v1/organizations/${organizationId}`,
+      },
+      accessToken,
+    );
   }
 
-  create(dto: CreateOrganizationDto): Promise<unknown> {
-    return this.accessAdminClient.request({
-      method: 'POST',
-      path: '/v1/organizations',
-      body: dto,
-    });
+  create(dto: CreateOrganizationDto, accessToken: string): Promise<unknown> {
+    return this.accessAdminClient.requestAsUser(
+      {
+        method: 'POST',
+        path: '/v1/organizations',
+        body: dto,
+      },
+      accessToken,
+    );
   }
 
-  update(organizationId: string, dto: UpdateOrganizationDto): Promise<unknown> {
-    return this.accessAdminClient.request({
-      method: 'PATCH',
-      path: `/v1/organizations/${organizationId}`,
-      body: dto,
-    });
+  update(
+    organizationId: string,
+    dto: UpdateOrganizationDto,
+    accessToken: string,
+  ): Promise<unknown> {
+    return this.accessAdminClient.requestAsUser(
+      {
+        method: 'PATCH',
+        path: `/v1/organizations/${organizationId}`,
+        body: dto,
+      },
+      accessToken,
+    );
   }
 
-  suspend(organizationId: string): Promise<unknown> {
-    return this.changeStatus(organizationId, 'suspend');
+  suspend(organizationId: string, accessToken: string): Promise<unknown> {
+    return this.changeStatus(organizationId, 'suspend', accessToken);
   }
 
-  activate(organizationId: string): Promise<unknown> {
-    return this.changeStatus(organizationId, 'activate');
+  activate(organizationId: string, accessToken: string): Promise<unknown> {
+    return this.changeStatus(organizationId, 'activate', accessToken);
   }
 
-  archive(organizationId: string): Promise<unknown> {
-    return this.changeStatus(organizationId, 'archive');
+  archive(organizationId: string, accessToken: string): Promise<unknown> {
+    return this.changeStatus(organizationId, 'archive', accessToken);
   }
 
   private changeStatus(
     organizationId: string,
     action: string,
+    accessToken: string,
   ): Promise<unknown> {
-    return this.accessAdminClient.request({
-      method: 'POST',
-      path: `/v1/organizations/${organizationId}/${action}`,
-    });
+    return this.accessAdminClient.requestAsUser(
+      {
+        method: 'POST',
+        path: `/v1/organizations/${organizationId}/${action}`,
+      },
+      accessToken,
+    );
   }
 }

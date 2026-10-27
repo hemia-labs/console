@@ -62,6 +62,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       RELEASE_TAG: ${{ inputs.release_tag }}
       REGISTRY_HOST: ${{ vars.REGISTRY_HOST }}
+      HEMIA_AUTHORIZATION_MODE: ${{ vars.HEMIA_AUTHORIZATION_MODE }}
       DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
       DEPLOY_USER: ${{ vars.DEPLOY_USER }}
       DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '22' }}

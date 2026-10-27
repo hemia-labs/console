@@ -237,7 +237,7 @@ describe("Console session boundary", () => {
 
 describe("Browser session failures and logout", () => {
   test.each([401, 403, 503])(
-    "invalidates session centrally on HTTP %s",
+    "only invalidates the session for HTTP 401, keeping resource failures local: %s",
     async (status) => {
       const { redirects, events } = browser();
       globalThis.fetch = (async () =>
@@ -248,7 +248,7 @@ describe("Browser session failures and logout", () => {
       await expect(
         consoleApi.get("/identity-access/users"),
       ).rejects.toMatchObject({ status });
-      expect(events).toEqual([status]);
+      expect(events).toEqual(status === 401 ? [401] : []);
       expect(redirects).toHaveLength(status === 401 ? 1 : 0);
       if (status === 401)
         expect(new URL(redirects[0]).searchParams.get("returnTo")).toBe(

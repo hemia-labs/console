@@ -72,7 +72,7 @@ export function ConsoleSessionProvider({ children }: { children: ReactNode }) {
         error={
           new Error(
             denied
-              ? "Console requiere un superadministrador de plataforma activo con acceso habilitado."
+              ? "Tu cuenta no tiene permiso para acceder a este recurso."
               : state.status === 429
                 ? "Espera un momento antes de intentar de nuevo."
                 : "El servicio de autorización no está disponible. Intenta nuevamente."

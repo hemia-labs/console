@@ -27,7 +27,7 @@ export class AuthSessionMiddleware implements NestMiddleware {
       cookie: session.id,
       authorization: `Bearer ${session.accessToken}`,
     };
-    await this.authorization.authorize(request);
+    this.authorization.assertAuthenticated(request);
     response.setHeader('Cache-Control', 'no-store');
     response.json({ authenticated: true, user: toConsoleUser(session.user) });
   }

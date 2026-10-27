@@ -25,7 +25,7 @@ export class ConsoleSsoExceptionFilter extends SsoExceptionFilter {
         statusCode: status,
         code: denied ? 'access_denied' : 'access_unavailable',
         message: denied
-          ? 'Platform superadministrator access required'
+          ? 'Access authorization denied'
           : 'Console authorization unavailable',
       });
   }

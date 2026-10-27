@@ -35,7 +35,7 @@ export function normalizeAuthError(reason: string | null | undefined) {
 }
 
 export function notifySessionFailure(status: number) {
-  if (typeof window === "undefined" || ![401, 403, 503].includes(status))
+  if (typeof window === "undefined" || status !== 401)
     return;
   window.dispatchEvent(
     new CustomEvent(SESSION_FAILURE_EVENT, { detail: status })

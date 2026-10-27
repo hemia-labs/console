@@ -1,3 +1,4 @@
+import authorizationConfig from './config/authorization.config';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { HealthModule } from './health/health.module';
@@ -21,6 +22,7 @@ import { AccessModule } from './modules/access/access.module';
       isGlobal: true,
       envFilePath: ['.env', '.env.local'],
       load: [
+        authorizationConfig,
         appConfig,
         hemiaIdConfig,
         accessAdminConfig,

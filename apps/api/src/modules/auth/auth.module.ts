@@ -30,7 +30,7 @@ import { AuthSessionMiddleware } from './session/auth-session.middleware';
     ConsoleAdminGuard,
     AuthSessionMiddleware,
   ],
-  exports: [ConsoleAuthorizationService, ConsoleAdminGuard],
+  exports: [SsoModule, ConsoleAuthorizationService, ConsoleAdminGuard],
 })
 export class AuthModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

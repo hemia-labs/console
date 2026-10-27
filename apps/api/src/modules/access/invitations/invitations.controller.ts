@@ -1,3 +1,4 @@
+import { SsoAuthGuard } from '@hemia/auth/nestjs';
 import {
   Body,
   Controller,
@@ -6,6 +7,7 @@ import {
   ParseUUIDPipe,
   Post,
   Req,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { SsoCurrentUserAuthGuard } from '../../identity-access/sso-current-user-auth.guard';
@@ -13,11 +15,14 @@ import {
   ConsoleAuthorizationService,
   type ConsoleRequest,
 } from '../../auth/authorization/console-authorization.service';
-import { CreateInvitationDto } from '../dtos/access.dto';
+import {
+  CreateInvitationDto,
+  ListInvitationsQueryDto,
+} from '../dtos/access.dto';
 import { InvitationsService } from './invitations.service';
 
 @Controller('access')
-@UseGuards(SsoCurrentUserAuthGuard)
+@UseGuards(SsoAuthGuard)
 export class InvitationsController {
   constructor(
     private readonly invitations: InvitationsService,
@@ -25,6 +30,7 @@ export class InvitationsController {
   ) {}
 
   @Post('organizations/:organizationId/invitations')
+  @UseGuards(SsoCurrentUserAuthGuard)
   async create(
     @Req() request: ConsoleRequest,
     @Param('organizationId', ParseUUIDPipe) organizationId: string,
@@ -48,6 +54,17 @@ export class InvitationsController {
     );
   }
 
+  @Get('invitations')
+  async listAll(
+    @Req() request: ConsoleRequest,
+    @Query() query: ListInvitationsQueryDto,
+  ) {
+    return this.invitations.listAll(
+      query,
+      await this.authorization.accessTokenFor(request),
+    );
+  }
+
   @Get('invitations/:invitationId')
   async findOne(
     @Req() request: ConsoleRequest,
@@ -60,6 +77,7 @@ export class InvitationsController {
   }
 
   @Post('invitations/:invitationId/revoke')
+  @UseGuards(SsoCurrentUserAuthGuard)
   async revoke(
     @Req() request: ConsoleRequest,
     @Param('invitationId', ParseUUIDPipe) invitationId: string,
@@ -71,6 +89,7 @@ export class InvitationsController {
   }
 
   @Post('invitations/:invitationId/resend')
+  @UseGuards(SsoCurrentUserAuthGuard)
   async resend(
     @Req() request: ConsoleRequest,
     @Param('invitationId', ParseUUIDPipe) invitationId: string,

@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ValidationPipe, type INestApplication } from '@nestjs/common';
 import { SsoCore, type SsoConfig, type Session } from '@hemia/auth';
 import { ConsoleSsoExceptionFilter } from '../../../apps/api/src/modules/auth/console-sso-exception.filter';
@@ -271,6 +271,21 @@ describe('Console SSO authorization (real SDK and guards)', () => {
             resolveStatus,
           );
         }
+        if (url.startsWith('http://access.test/v1/organizations')) {
+          expect(new Headers(init?.headers).get('Authorization')).toBe(
+            'Bearer user-access-token',
+          );
+          return json(init?.method === 'GET' ? [] : { id: 'created-resource' });
+        }
+        if (
+          url.startsWith('http://access.test/v1/invitations') &&
+          init?.method === 'GET'
+        ) {
+          expect(new Headers(init?.headers).get('Authorization')).toBe(
+            'Bearer user-access-token',
+          );
+          return json({ items: [], total: 0, limit: 25, offset: 0 });
+        }
         if (url === cfg.revocationUrl)
           return new Response(null, { status: 204 });
         if (
@@ -409,8 +424,8 @@ describe('Console SSO authorization (real SDK and guards)', () => {
       .get('/access/organizations')
       .set('Cookie', `console_session=${sessionId}`)
       .expect(200);
-    expect(adminCalls).toBe(3);
-    expect(resolveCalls).toBe(5);
+    expect(adminCalls).toBe(2);
+    expect(resolveCalls).toBe(2);
   });
 
   it.each([
@@ -422,7 +437,7 @@ describe('Console SSO authorization (real SDK and guards)', () => {
     { product: { code: 'console', status: 'disabled' } },
     { product: { code: 'legal', status: 'enabled' } },
   ])(
-    'denies inactive or non-superadministrator context: %j',
+    'allows the registered session but denies administrative access for context: %j',
     async (change) => {
       context = {
         ...accessContext(),
@@ -434,7 +449,7 @@ describe('Console SSO authorization (real SDK and guards)', () => {
       await api()
         .get('/auth/session')
         .set('Cookie', `console_session=${sessionId}`)
-        .expect(403);
+        .expect(200);
       await api()
         .post('/identity-access/oauth-clients')
         .set('Cookie', `console_session=${sessionId}`)
@@ -444,6 +459,102 @@ describe('Console SSO authorization (real SDK and guards)', () => {
     },
   );
 
+  it('allows organization administrators to query organizations and invitations with their own token', async () => {
+    context = {
+      ...accessContext(),
+      organizations: [
+        {
+          ...organization(),
+          roles: ['organization_admin'],
+          permissions: ['organization.read', 'membership.read'],
+        },
+      ],
+    };
+    signedClaims.global_roles = [];
+    signedClaims.permissions = ['organization.read', 'membership.read'];
+    for (const path of [
+      '/access/organizations',
+      '/access/organizations/403b298c-4c80-4d5e-afb2-6f703238963d',
+      '/access/invitations',
+      '/access/organizations/403b298c-4c80-4d5e-afb2-6f703238963d/invitations',
+      '/access/invitations/254f4696-71c0-4fe5-aff2-4f1ef71daa2e',
+    ]) {
+      await api()
+        .get(path)
+        .set('Cookie', `console_session=${sessionId}`)
+        .expect(200);
+    }
+    expect(adminCalls).toBe(0);
+    expect(resolveCalls).toBe(0);
+    await api()
+      .post('/access/organizations')
+      .set('Cookie', `console_session=${sessionId}`)
+      .send({
+        code: 'organization',
+        name: 'Organization',
+        slug: 'organization',
+      })
+      .expect(403);
+    await api()
+      .post(
+        '/access/organizations/403b298c-4c80-4d5e-afb2-6f703238963d/invitations',
+      )
+      .set('Cookie', `console_session=${sessionId}`)
+      .send({ email: 'test@example.test' })
+      .expect(403);
+    expect(adminCalls).toBe(0);
+  });
+
+  it('authenticated mode permits actions without roles but keeps membership and product checks', async () => {
+    app.get(ConfigService).set('authorization.mode', 'authenticated');
+    signedClaims.global_roles = [];
+    signedClaims.permissions = [];
+    context = {
+      ...accessContext(),
+      organizations: [{ ...organization(), roles: [], permissions: [] }],
+    };
+    await api()
+      .post('/identity-access/oauth-clients')
+      .set('Cookie', `console_session=${sessionId}`)
+      .send(oauthClient)
+      .expect(201);
+    await api()
+      .post(
+        '/access/organizations/403b298c-4c80-4d5e-afb2-6f703238963d/invitations',
+      )
+      .set('Cookie', `console_session=${sessionId}`)
+      .send({ email: 'test@example.test' })
+      .expect(201);
+    await api()
+      .post(
+        '/access/organizations/403b298c-4c80-4d5e-afb2-6f703238963d/invitations',
+      )
+      .send({ email: 'test@example.test' })
+      .expect(401);
+    context = { ...accessContext(), organizations: [] };
+    await api()
+      .post('/identity-access/oauth-clients')
+      .set('Cookie', `console_session=${sessionId}`)
+      .send(oauthClient)
+      .expect(403);
+  });
+
+  it('returning to roles mode restores role enforcement immediately', async () => {
+    const config = app.get(ConfigService);
+    config.set('authorization.mode', 'authenticated');
+    signedClaims.global_roles = [];
+    signedClaims.permissions = [];
+    await api()
+      .get('/identity-access/users')
+      .set('Cookie', `console_session=${sessionId}`)
+      .expect(200);
+    config.set('authorization.mode', 'roles');
+    await api()
+      .get('/identity-access/users')
+      .set('Cookie', `console_session=${sessionId}`)
+      .expect(403);
+  });
+
   it('ignores login context and detects revocation between requests', async () => {
     await api()
       .post('/identity-access/oauth-clients')
@@ -452,7 +563,7 @@ describe('Console SSO authorization (real SDK and guards)', () => {
       .expect(201);
     context = { ...accessContext(), organizations: [] };
     await api()
-      .get('/access/organizations')
+      .get('/identity-access/oauth-clients')
       .set('Cookie', `console_session=${sessionId}`)
       .expect(403);
     await api()
@@ -471,7 +582,7 @@ describe('Console SSO authorization (real SDK and guards)', () => {
         identity: { ...accessContext().identity, ...change },
       };
       await api()
-        .get('/me')
+        .get('/identity-access/users')
         .set('Cookie', `console_session=${sessionId}`)
         .expect(403);
       expect(adminCalls).toBe(0);
@@ -483,7 +594,7 @@ describe('Console SSO authorization (real SDK and guards)', () => {
     async (status) => {
       contextStatus = status;
       await api()
-        .get('/auth/session')
+        .get('/identity-access/users')
         .set('Cookie', `console_session=${sessionId}`)
         .expect(status === 500 ? 503 : 403);
       expect(await store.get(`sso:session:${sessionId}`)).not.toBeNull();
@@ -511,7 +622,7 @@ describe('Console SSO authorization (real SDK and guards)', () => {
   ])('rejects malformed Access response', async (body) => {
     context = body;
     await api()
-      .get('/auth/session')
+      .get('/identity-access/users')
       .set('Cookie', `console_session=${sessionId}`)
       .expect(503);
   });
@@ -536,7 +647,7 @@ describe('Console SSO authorization (real SDK and guards)', () => {
         .set('Cookie', `console_session=${sessionId}`)
         .expect(503);
       await api()
-        .get('/access/organizations')
+        .get('/identity-access/oauth-clients')
         .set('Cookie', `console_session=${sessionId}`)
         .expect(503);
       expect(await store.get(`sso:session:${sessionId}`)).not.toBeNull();
@@ -544,18 +655,18 @@ describe('Console SSO authorization (real SDK and guards)', () => {
     },
   );
 
-  it('rejects a user without organizations before reading administrative data', async () => {
+  it('allows registered users without organizations while keeping administrative data protected', async () => {
     context = { ...accessContext(), organizations: [] };
     await api()
       .get('/me')
       .set('Cookie', `console_session=${sessionId}`)
-      .expect(403);
+      .expect(200);
     await api()
       .get('/identity-access/users')
       .set('Cookie', `console_session=${sessionId}`)
       .expect(403);
     await api()
-      .get('/access/organizations')
+      .get('/identity-access/oauth-clients')
       .set('Cookie', `console_session=${sessionId}`)
       .expect(403);
     expect(adminCalls).toBe(0);
@@ -563,7 +674,7 @@ describe('Console SSO authorization (real SDK and guards)', () => {
 
   it('detects a revoked platform role on the next request', async () => {
     await api()
-      .get('/access/organizations')
+      .get('/identity-access/users')
       .set('Cookie', `console_session=${sessionId}`)
       .expect(200);
     context = {
@@ -574,7 +685,7 @@ describe('Console SSO authorization (real SDK and guards)', () => {
     await api()
       .get('/auth/session')
       .set('Cookie', `console_session=${sessionId}`)
-      .expect(403);
+      .expect(200);
     await api()
       .get('/identity-access/users')
       .set('Cookie', `console_session=${sessionId}`)
@@ -646,7 +757,7 @@ describe('Console SSO authorization (real SDK and guards)', () => {
     async (status) => {
       resolveStatus = status;
       await api()
-        .get('/auth/session')
+        .get('/identity-access/users')
         .set('Cookie', `console_session=${sessionId}`)
         .expect([401, 403].includes(status) ? 403 : 503);
       expect(adminCalls).toBe(0);
@@ -693,7 +804,7 @@ describe('Console SSO authorization (real SDK and guards)', () => {
     async (claims) => {
       signedClaims = claims;
       await api()
-        .get('/auth/session')
+        .get('/identity-access/users')
         .set('Cookie', `console_session=${sessionId}`)
         .expect(503);
       expect(adminCalls).toBe(0);
@@ -761,6 +872,32 @@ describe('Console SSO authorization (real SDK and guards)', () => {
     ])
       expect(cookies[0]).toContain(flag);
     expect(cookies[0]).not.toContain(jwt());
+  });
+
+  it('allows login and session for a registered account without organizations or platform roles', async () => {
+    context = { ...accessContext(), organizations: [] };
+    signedClaims.global_roles = [];
+    signedClaims.permissions = [];
+    const login = await api().get('/auth/login?returnTo=/es').expect(302);
+    const state = new URL(login.headers.location).searchParams.get('state');
+    const callback = await api()
+      .get(`/auth/callback?code=test-code&state=${state}`)
+      .expect(302);
+    const cookie = (
+      callback.headers['set-cookie'] as unknown as string[]
+    )[0].split(';')[0];
+    expect(callback.headers.location).toBe('http://console.test/es');
+    const session = await api()
+      .get('/auth/session')
+      .set('Cookie', cookie)
+      .expect(200);
+    expect((session.body as { authenticated: boolean }).authenticated).toBe(
+      true,
+    );
+    await api().get('/me').set('Cookie', cookie).expect(200);
+    await api().get('/identity-access/users').set('Cookie', cookie).expect(403);
+    expect(resolveCalls).toBe(0);
+    expect(adminCalls).toBe(0);
   });
 
   it('rejects callback tokens without console.access', async () => {
