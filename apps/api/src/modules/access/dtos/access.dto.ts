@@ -4,6 +4,8 @@ import {
   IsEmail,
   IsIn,
   IsInt,
+  IsUUID,
+  Max,
   IsObject,
   IsOptional,
   IsString,
@@ -261,4 +263,23 @@ export class CreateInvitationDto {
   @IsInt()
   @Min(1)
   expires_in_hours?: number;
+}
+
+export class ListInvitationsQueryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit: number = 25;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  offset: number = 0;
+
+  @IsOptional()
+  @IsUUID()
+  organization_id?: string;
 }

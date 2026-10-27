@@ -38,6 +38,16 @@ export class ConsoleAuthorizationService {
     private readonly config: ConfigService,
   ) {}
 
+  assertAuthenticated(request: ConsoleRequest): void {
+    if (
+      !request.user?.sub ||
+      !request.ssoAuth?.accessToken ||
+      request.user.iss !== this.config.getOrThrow<string>('sso.issuer')
+    ) {
+      throw new UnauthorizedException('Missing authenticated session');
+    }
+  }
+
   async accessTokenFor(request: ConsoleRequest): Promise<string> {
     if (!request.user?.sub || !request.ssoAuth?.accessToken)
       throw new UnauthorizedException('Missing authenticated session');
@@ -183,8 +193,10 @@ export class ConsoleAuthorizationService {
         claims.membership_status === 'active' &&
         claims.product_code === 'console' &&
         claims.product_status === 'enabled' &&
-        claims.global_roles.includes('platform_super_admin') &&
-        claims.permissions.includes('*')
+        (this.config.get<string>('authorization.mode', 'roles') ===
+          'authenticated' ||
+          (claims.global_roles.includes('platform_super_admin') &&
+            claims.permissions.includes('*')))
       ) {
         return;
       }

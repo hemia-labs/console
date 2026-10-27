@@ -8,6 +8,9 @@ const requiredInProd = (fallback: string) =>
   });
 
 export const envVarsSchema = Joi.object({
+  HEMIA_AUTHORIZATION_MODE: Joi.string()
+    .valid('roles', 'authenticated')
+    .default('roles'),
   NODE_ENV: Joi.string()
     .valid('development', 'test', 'production')
     .default('development'),

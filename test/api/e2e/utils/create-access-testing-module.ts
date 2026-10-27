@@ -1,3 +1,4 @@
+import { ConsoleAdminGuard } from '../../../../apps/api/src/modules/auth/authorization/console-admin.guard';
 import { ConsoleAuthorizationService } from '../../../../apps/api/src/modules/auth/authorization/console-authorization.service';
 import { ConfigModule } from '@nestjs/config';
 import { UnauthorizedException, type ExecutionContext } from '@nestjs/common';
@@ -10,6 +11,18 @@ import redisConfig from '../../../../apps/api/src/config/redis.config';
 import ssoConfig from '../../../../apps/api/src/config/sso.config';
 import { AccessModule } from '../../../../apps/api/src/modules/access/access.module';
 import { REDIS } from '../../../../apps/api/src/modules/auth/session/redis-session-store';
+
+const authenticatedGuard = {
+  canActivate: jest.fn((context: ExecutionContext) => {
+    const request = context
+      .switchToHttp()
+      .getRequest<Request & { user?: { sub: string } }>();
+    if (!request.headers.authorization && !request.headers.cookie)
+      throw new UnauthorizedException('Missing auth');
+    request.user = { sub: 'console-user' };
+    return true;
+  }),
+};
 
 export const createAccessTestingModule = () =>
   Test.createTestingModule({
@@ -33,16 +46,7 @@ export const createAccessTestingModule = () =>
       quit: jest.fn().mockResolvedValue('OK'),
       set: jest.fn().mockResolvedValue('OK'),
     })
-    .overrideProvider(SsoAuthGuard)
-    .useValue({
-      canActivate: jest.fn((context: ExecutionContext) => {
-        const request = context
-          .switchToHttp()
-          .getRequest<Request & { user?: { sub: string } }>();
-        if (!request.headers.authorization && !request.headers.cookie) {
-          throw new UnauthorizedException('Missing auth');
-        }
-        request.user = { sub: 'console-user' };
-        return true;
-      }),
-    });
+    .overrideGuard(SsoAuthGuard)
+    .useValue(authenticatedGuard)
+    .overrideGuard(ConsoleAdminGuard)
+    .useValue(authenticatedGuard);

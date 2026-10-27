@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { AccessAdminClient } from '../../../integrations/access/access-admin.client';
-import { CreateInvitationDto } from '../dtos/access.dto';
+import {
+  CreateInvitationDto,
+  ListInvitationsQueryDto,
+} from '../dtos/access.dto';
 
 @Injectable()
 export class InvitationsService {
@@ -27,6 +30,16 @@ export class InvitationsService {
         method: 'GET',
         path: `/v1/organizations/${organizationId}/invitations`,
       },
+      accessToken,
+    );
+  }
+
+  listAll(
+    query: ListInvitationsQueryDto,
+    accessToken: string,
+  ): Promise<unknown> {
+    return this.accessAdminClient.requestAsUser(
+      { method: 'GET', path: '/v1/invitations', query: { ...query } },
       accessToken,
     );
   }

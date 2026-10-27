@@ -36,6 +36,35 @@ describe('Access proxy (e2e)', () => {
     expect(accessAdminClient.request).not.toHaveBeenCalled();
   });
 
+  it('requires SSO for global invitations and forwards pagination with the current user', async () => {
+    await request(app.getHttpServer()).get('/access/invitations').expect(401);
+    await request(app.getHttpServer())
+      .get('/access/invitations?limit=25&offset=25')
+      .set('Authorization', 'Bearer console-token')
+      .expect(200);
+    expect(accessAdminClient.requestAsUser).toHaveBeenCalledWith(
+      {
+        method: 'GET',
+        path: '/v1/invitations',
+        query: { limit: 25, offset: 25 },
+      },
+      'exchanged-user-token',
+    );
+    expect(accessAdminClient.request).not.toHaveBeenCalled();
+  });
+
+  it('rejects unbounded or invalid invitation pagination before calling Access', async () => {
+    await request(app.getHttpServer())
+      .get('/access/invitations?limit=101')
+      .set('Authorization', 'Bearer console-token')
+      .expect(400);
+    await request(app.getHttpServer())
+      .get('/access/invitations?offset=-1')
+      .set('Authorization', 'Bearer console-token')
+      .expect(400);
+    expect(accessAdminClient.requestAsUser).not.toHaveBeenCalled();
+  });
+
   it('proxies organizations and preserves query params', async () => {
     await request(app.getHttpServer())
       .get('/access/organizations')
@@ -44,11 +73,19 @@ describe('Access proxy (e2e)', () => {
       .expect(200)
       .expect({ ok: true });
 
-    expect(accessAdminClient.request).toHaveBeenCalledWith({
-      method: 'GET',
-      path: '/v1/organizations',
-      query: { limit: 50, search: 'acme', status: 'active', type: 'customer' },
-    });
+    expect(accessAdminClient.requestAsUser).toHaveBeenCalledWith(
+      {
+        method: 'GET',
+        path: '/v1/organizations',
+        query: {
+          limit: 50,
+          search: 'acme',
+          status: 'active',
+          type: 'customer',
+        },
+      },
+      'exchanged-user-token',
+    );
   });
 
   it('proxies organization, membership and role mutations', async () => {
@@ -82,7 +119,11 @@ describe('Access proxy (e2e)', () => {
       .set(auth)
       .expect(200);
 
-    expect(accessAdminClient.request.mock.calls).toEqual([
+    expect(
+      accessAdminClient.requestAsUser.mock.calls.map(([options]: [unknown]) => [
+        options,
+      ]),
+    ).toEqual([
       [{ method: 'POST', path: `/v1/organizations/${organizationId}/archive` }],
       [
         {
@@ -137,11 +178,15 @@ describe('Access proxy (e2e)', () => {
       .send({})
       .expect(404);
 
-    expect(accessAdminClient.request).toHaveBeenNthCalledWith(1, {
-      method: 'POST',
-      path: `/v1/organizations/${organizationId}/products/horus/enable`,
-      body: { source: 'manual' },
-    });
+    expect(accessAdminClient.requestAsUser).toHaveBeenNthCalledWith(
+      1,
+      {
+        method: 'POST',
+        path: `/v1/organizations/${organizationId}/products/horus/enable`,
+        body: { source: 'manual' },
+      },
+      'exchanged-user-token',
+    );
     expect(accessAdminClient.requestAsUser).toHaveBeenCalledWith(
       {
         method: 'POST',

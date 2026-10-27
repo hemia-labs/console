@@ -1,10 +1,13 @@
 import { Controller, Get, Header, UseGuards } from '@nestjs/common';
-import { CurrentUser, type CurrentUserPayload } from '@hemia/auth/nestjs';
-import { ConsoleAdminGuard } from './authorization/console-admin.guard';
+import {
+  CurrentUser,
+  SsoAuthGuard,
+  type CurrentUserPayload,
+} from '@hemia/auth/nestjs';
 import { toConsoleUser, type ConsoleUser } from './console-user';
 
 @Controller('me')
-@UseGuards(ConsoleAdminGuard)
+@UseGuards(SsoAuthGuard)
 export class MeController {
   @Get()
   @Header('Cache-Control', 'no-store')
