@@ -31,13 +31,13 @@ export type NavItem = {
 export const nav: NavItem[] = [
   {
     href: "/",
-    label: "Dashboard",
-    description: "Resumen operativo de la consola",
+    label: "Inicio",
+    description: "Sistemas y administración de Hemia",
     icon: LayoutDashboard,
   },
   {
     label: "Identity",
-    description: "Usuarios y clientes de identidad",
+    description: "Usuarios, clientes y catálogos OAuth",
     icon: ShieldUser,
     children: [
       {
@@ -51,6 +51,18 @@ export const nav: NavItem[] = [
         label: "OAuth clients",
         description: "Clientes OAuth y secretos one-time",
         icon: BriefcaseBusiness,
+      },
+      {
+        href: "/catalogs/oauth-apis",
+        label: "APIs OAuth",
+        description: "Audiencias y permisos admitidos",
+        icon: Network,
+      },
+      {
+        href: "/catalogs/oauth-scopes",
+        label: "Scopes OAuth",
+        description: "Permisos de APIs y servicios",
+        icon: KeyRound,
       },
     ],
   },
@@ -73,7 +85,7 @@ export const nav: NavItem[] = [
       },
       {
         href: "/access/system-role-catalogs",
-        label: "Catálogos de sistema",
+        label: "Catálogos de roles",
         description: "Publicación de catálogos de roles",
         icon: KeyRound,
       },
@@ -101,18 +113,6 @@ export const nav: NavItem[] = [
     label: "Catálogos",
     icon: Network,
     children: [
-      {
-        href: "/catalogs/oauth-apis",
-        label: "APIs OAuth",
-        description: "Audiencias y permisos admitidos",
-        icon: Network,
-      },
-      {
-        href: "/catalogs/oauth-scopes",
-        label: "Scopes OAuth",
-        description: "Permisos de APIs y servicios",
-        icon: KeyRound,
-      },
       {
         href: "/catalogs/systems",
         label: "Sistemas",

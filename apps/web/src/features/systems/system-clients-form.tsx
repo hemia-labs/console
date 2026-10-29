@@ -185,7 +185,18 @@ export function SystemClientsForm({
           binding.roles.includes(f.code),
         );
         const fn = functions.length
-          ? { scopes: functions.flatMap((f) => f.scopes) }
+          ? {
+              scopes: Array.from(
+                new Map(
+                  functions.flatMap((f) =>
+                    f.scopes.map((ref) => [
+                      JSON.stringify([ref.code, ref.audience]),
+                      ref,
+                    ] as const),
+                  ),
+                ).values(),
+              ),
+            }
           : undefined;
         const capOptions = active.map((c) => ({
           value: c.code,
@@ -309,7 +320,7 @@ export function SystemClientsForm({
                     );
                     return (
                       <li
-                        key={JSON.stringify(ref)}
+                        key={JSON.stringify([ref.code, ref.audience])}
                         className="break-all text-xs text-muted-foreground"
                       >
                         {scope && scope.name !== ref.code && (

@@ -143,3 +143,39 @@ test("scope codes matching their name are displayed only once", () => {
     expect(html.includes("Descripción")).toBe(kind === "api");
   }
 });
+
+
+test("system clients merge shared permissions while keeping different audiences", () => {
+  const otherAudience = "other-api";
+  const html = renderToStaticMarkup(
+    <SystemClientsForm
+      clients={[{
+        capabilityCode: capability.code,
+        roles: [fn.code, "reader"],
+        clientId: "",
+        oauthIssuer: "",
+        enabled: true,
+      }]}
+      capabilities={[{
+        ...capability,
+        functions: [fn, {
+          code: "reader",
+          name: "Consultar",
+          scopes: [
+            { audience: scope.audience, code: scope.code },
+            { code: scope.code, audience: otherAudience },
+          ],
+        }],
+      }]}
+      configuration={{ notifications: {} }}
+      choices={{ ...choices, scopes: [scope, { ...scope, audience: otherAudience }] }}
+      systemCode="portal"
+      onChange={() => {}}
+      onBusyChange={() => {}}
+      onSecretPending={() => {}}
+    />,
+  );
+  expect(html.match(/<li /g)).toHaveLength(2);
+  expect(html.match(/notifications\.messages\.send/g)).toHaveLength(2);
+  expect(html).toContain(otherAudience);
+});

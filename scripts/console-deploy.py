@@ -48,6 +48,12 @@ def deploy(root, bundle, registry):
             config = compose["services"][service]
             config["ports"] = [{"target": port, "published": str(port), "host_ip": bind, "protocol": "tcp"}]
         compose["services"]["api"]["env_file"] = [{"path": str(secret), "format": "raw"}]
+        web_urls = {}
+        for line in secret.read_text().splitlines():
+            key, separator, value = line.partition("=")
+            if separator and key in {"BILLING_WEB_URL", "LEGAL_WEB_URL", "BALANZ_WEB_URL", "DOCS_WEB_URL"}:
+                web_urls[key] = value
+        compose["services"]["web"].setdefault("environment", {}).update(web_urls)
         releases = root / "releases"
         releases.mkdir(exist_ok=True)
         # Each attempt has its own directory; previous working bundles are never overwritten.

@@ -21,7 +21,7 @@ class DeployTest(unittest.TestCase):
         shared = self.root / 'shared'
         shared.mkdir(parents=True)
         self.secret = shared / 'production.env'
-        self.secret.write_text('SSO_CLIENT_SECRET=fixture\n')
+        self.secret.write_text('SSO_CLIENT_SECRET=fixture\nBILLING_WEB_URL=https://billing.example\n')
         self.secret.chmod(0o600)
         (shared / 'host.json').write_text(json.dumps({'public_url': 'https://console.example', 'bind_address': '127.0.0.1'}))
         self.manifest = {'revision': 'a' * 40, 'public_url': 'https://console.example'}
@@ -44,6 +44,7 @@ class DeployTest(unittest.TestCase):
         deploy.deploy(self.root, self.bundle, 'registry.example')
         active = json.loads((self.root / 'current/compose.json').read_text())
         self.assertEqual(active['services']['api']['env_file'][0]['path'], str(self.secret.resolve()))
+        self.assertEqual(active['services']['web']['environment'], {'BILLING_WEB_URL': 'https://billing.example'})
         commands = [call.args[0] for call in run.call_args_list]
         self.assertEqual(len(commands), 3)
         self.assertIn('pull', commands[1])

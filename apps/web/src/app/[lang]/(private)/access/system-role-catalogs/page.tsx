@@ -4,7 +4,7 @@ export default function SystemRoleCatalogsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Catálogos de sistema"
+        title="Catálogos de roles"
         description="Administra las versiones de roles disponibles por sistema y publícalas en Access."
       />
       <CatalogsClient />
