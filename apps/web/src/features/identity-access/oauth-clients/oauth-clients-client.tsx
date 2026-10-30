@@ -60,7 +60,7 @@ export function OAuthClientsClient({
     return clients.filter((client) => {
       const matchesStatus = status ? client.status === status : true;
       const matchesSearch = normalizedSearch
-        ? [client.clientId, client.audience, ...(client.serviceDestinations ?? []).flatMap((destination) => [destination.audience, destination.resource, ...destination.scopes])].some((value) =>
+        ? [client.clientId, client.name, client.description, client.audience, ...(client.serviceDestinations ?? []).flatMap((destination) => [destination.audience, destination.resource, ...destination.scopes])].some((value) =>
             String(value ?? "")
               .toLowerCase()
               .includes(normalizedSearch)

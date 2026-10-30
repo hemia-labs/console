@@ -5,6 +5,21 @@ import type {
   System,
 } from "./types";
 export type Selection = Record<string, string[]>;
+export function suggestedSystemCode(name: string) {
+  return name.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
+}
+
+export function clientCreationSelection(selected: Selection, capabilities: Capability[]) {
+  for (const capability of capabilities) {
+    const roles = (selected[capability.code] ?? []).filter((role) =>
+      capability.functions?.some((fn) => fn.code === role && fn.scopes.length > 0),
+    );
+    if (roles.length) return { capabilityCode: capability.code, roles };
+  }
+  return undefined;
+}
+
 export type ConnectionOptions = {
   systems: System[];
   capabilities: Capability[];
@@ -15,6 +30,7 @@ export type PaymentsOptions = {
   organizations: { id: string; name: string }[];
   policies: {
     clientId: string;
+    products?: string[];
     organizationScope: "organizations" | "all_for_allowed_products";
     organizationIds?: string[];
   }[];
@@ -133,11 +149,12 @@ export function initialDraft(
   const standardService = system?.services.find(
     (service) =>
       service.enabled &&
-      ["payments-license", "payments-check"].includes(service.code),
+      ["payments-license", "payments-check", "payments-legal-context"].includes(service.code) &&
+      /\/payments\/(?:webhooks\/license|integration-status|legal\/context)$/.test(service.url),
   );
   const backendBaseUrl =
     standardService?.url.replace(
-      /\/payments\/(?:webhooks\/license|integration-status)$/,
+      /\/payments\/(?:webhooks\/license|integration-status|legal\/context)$/,
       "",
     ) ?? "";
   return {
@@ -148,7 +165,7 @@ export function initialDraft(
     payments: {
       backendBaseUrl,
       customServices:
-        !backendBaseUrl && Boolean(p.receiverService || p.checkService),
+        !backendBaseUrl && Boolean(p.receiverService || p.checkService || system?.configuration.legalAcceptances?.contextService),
       productCode: String(p.productCode ?? ""),
       organizationScope: "organizations",
       organizationIds: [],
@@ -210,7 +227,7 @@ export function connectionPayload(
           schemaFields(
             c,
             value.selected,
-            relevant.payments && !p.customServices,
+            relevant.payments && !p.customServices && (relevant.checkout || relevant.receiver),
           )
             .filter((f) => value.configuration[c.code]?.[f.key] !== undefined)
             .map((f) => [f.key, value.configuration[c.code][f.key]]),
@@ -221,7 +238,7 @@ export function connectionPayload(
           payments: {
             productCode: p.productCode,
             ...(!p.customServices &&
-            (relevant.checkout || relevant.receiver || relevant.legal)
+            (relevant.checkout || relevant.receiver)
               ? { backendBaseUrl: p.backendBaseUrl }
               : {}),
             ...(relevant.organizations
@@ -250,25 +267,26 @@ export function connectionPayload(
     ...(relevant.legal ? { legal: value.legal } : {}),
   };
 }
-export function configurationError(
+export function configurationIssues(
   value: ConnectionDraft,
   capabilities: Capability[],
 ) {
   const n = needs(value.selected),
     p = value.payments;
-  if (n.payments && !p.productCode) return "Selecciona un producto.";
+  const issues: string[] = [];
+  if (n.payments && !p.productCode) issues.push("Selecciona un producto.");
   if (
     n.organizations &&
     p.organizationScope === "organizations" &&
     !p.organizationIds.length
   )
-    return "Selecciona las organizaciones autorizadas.";
+    issues.push("Selecciona las organizaciones autorizadas.");
   if (n.checkout && (!p.successUrl || !p.cancelUrl))
-    return "Completa los regresos del pago.";
+    issues.push("Completa los regresos del pago.");
   if (
     n.payments &&
     !p.customServices &&
-    (n.checkout || n.receiver || n.legal)
+    (n.checkout || n.receiver)
   ) {
     try {
       const base = new URL(p.backendBaseUrl);
@@ -287,27 +305,31 @@ export function configurationError(
       )
         throw new Error();
     } catch {
-      return "Completa una URL base segura del backend, incluido su prefijo API.";
+      issues.push("Completa una URL base segura del backend, incluido su prefijo API.");
     }
   }
   if (n.receiver && p.customServices && !p.receiverService)
-    return "Selecciona el receptor de licencias.";
+    issues.push("Selecciona el receptor de licencias.");
   if (
     n.legal &&
     (!value.legal.applicationId || !value.legal.documentIds.length)
   )
-    return "Selecciona la aplicación legal y sus documentos.";
+    issues.push("Selecciona la aplicación legal y sus documentos.");
   for (const c of capabilities.filter((c) => value.selected[c.code]?.length))
     for (const f of schemaFields(
       c,
       value.selected,
-      n.payments && !p.customServices,
+      n.payments && !p.customServices && (n.checkout || n.receiver),
     ))
       if (
         f.required &&
         (value.configuration[c.code]?.[f.key] === undefined ||
           value.configuration[c.code]?.[f.key] === "")
       )
-        return `Completa ${f.label}.`;
-  return "";
+        issues.push(`Completa ${f.label}.`);
+  return issues;
+}
+
+export function configurationError(value: ConnectionDraft, capabilities: Capability[]) {
+  return configurationIssues(value, capabilities)[0] ?? "";
 }

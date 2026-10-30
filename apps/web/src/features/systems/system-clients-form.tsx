@@ -94,7 +94,7 @@ export function SystemClientsForm({
         ),
       );
       setSecret({
-        title: "Cliente de Identity creado",
+        title: "Cliente OAuth creado",
         clientId: result.client.clientId,
         clientSecret: result.clientSecret,
         type: "confidential",
@@ -120,7 +120,7 @@ export function SystemClientsForm({
         <div>
           <h2 className="flex items-center gap-2 text-base font-semibold">
             <KeyRound className="size-4" />
-            Clientes del sistema
+            Clientes OAuth del sistema
           </h2>
           <p className="text-sm text-muted-foreground">
             Selecciona una capacidad y sus funciones. Sus permisos se obtienen
@@ -154,7 +154,7 @@ export function SystemClientsForm({
           href={identityClientsHref}
           className="inline-flex min-h-10 items-center text-sm font-medium text-primary underline underline-offset-4"
         >
-          Administrar clientes en Identity
+          Administrar clientes OAuth en Identity
         </Link>
       )}
       {!active.length && (
@@ -346,8 +346,8 @@ export function SystemClientsForm({
             )}
             <Field
               id={`client-selection-${index}`}
-              label="Cliente de Identity"
-              help="Reutiliza el cliente del backend. Al guardar se asignan los permisos seleccionados."
+              label="Cliente OAuth"
+              help="Selecciona el cliente OAuth del sistema. Al guardar se asignan los permisos seleccionados."
             >
               <Choice
                 id={`client-selection-${index}`}
@@ -383,7 +383,7 @@ export function SystemClientsForm({
                 setError("");
               }}
             >
-              Crear cliente en Identity
+              Crear cliente OAuth en Identity
             </Button>
             {creatingFor === index && (
               <div className="space-y-4 rounded-lg border border-primary/20 p-4">

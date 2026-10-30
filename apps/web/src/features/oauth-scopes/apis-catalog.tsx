@@ -5,7 +5,7 @@ import { Button } from "@/components/zuno/button";
 import { Card } from "@/components/zuno/card";
 import { Input } from "@/components/zuno/input";
 import { Switch } from "@/components/zuno/switch";
-import { Field } from "@/features/systems/catalog-fields";
+import { Field, textareaClass } from "@/features/systems/catalog-fields";
 import { getOAuthApis, getOAuthScopes, saveOAuthApi } from "./api";
 import { ScopePicker } from "./scope-picker";
 import type { OAuthApi, OAuthScope } from "./types";
@@ -55,7 +55,7 @@ function ApiList({
       />
     );
   const visible = apis.filter((a) =>
-    `${a.name} ${a.audience} ${a.resource ?? ""}`
+    `${a.name} ${a.description ?? ""} ${a.audience} ${a.resource ?? ""}`
       .toLowerCase()
       .includes(query.toLowerCase()),
   );
@@ -65,7 +65,7 @@ function ApiList({
         <Input
           className="h-10 flex-1"
           aria-label="Buscar APIs"
-          placeholder="Buscar API o audiencia"
+          placeholder="Buscar por nombre, descripción o audiencia"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -79,6 +79,11 @@ function ApiList({
           >
             <div className="min-w-0 space-y-1">
               <h2 className="text-sm font-semibold">{api.name}</h2>
+              {api.description && (
+                <p className="max-w-3xl text-sm text-muted-foreground">
+                  {api.description}
+                </p>
+              )}
               <p className="break-all font-mono text-xs text-muted-foreground">
                 {api.audience} · {api.resource || "URL pendiente"}
               </p>
@@ -120,12 +125,20 @@ function ApiForm({
     api
       ? {
           name: api.name,
+          description: api.description ?? "",
           audience: api.audience,
           resource: api.resource,
           enabled: api.enabled,
           scopes: [...api.scopes],
         }
-      : { name: "", audience: "", resource: "", enabled: true, scopes: [] },
+      : {
+          name: "",
+          description: "",
+          audience: "",
+          resource: "",
+          enabled: true,
+          scopes: [],
+        },
   );
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -184,6 +197,23 @@ function ApiForm({
               />
             </Field>
           ))}
+          <Field
+            id="api-description"
+            label="Descripción"
+            help="Explica qué ofrece esta API y para qué se utiliza."
+          >
+            <textarea
+              id="api-description"
+              className={`${textareaClass} min-h-24 font-sans`}
+              aria-describedby="api-description-help"
+              maxLength={2000}
+              placeholder="Ej. Permite consultar el catálogo y gestionar las operaciones de la aplicación."
+              value={value.description ?? ""}
+              onChange={(e) =>
+                setValue((v) => ({ ...v, description: e.target.value }))
+              }
+            />
+          </Field>
           <Field id="api-scopes" label="Scopes que admite esta API">
             <ScopePicker
               id="api-scopes"

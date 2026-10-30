@@ -11,6 +11,7 @@ export type CatalogScope = {
 export type CatalogApi = {
   id: string;
   name: string;
+  description?: string;
   audience: string;
   resource: string | null;
   enabled: boolean;
@@ -42,6 +43,8 @@ export async function loadApiScopes(identity: HemiaIdAdminClient) {
         ...scope,
         id: `${api.id}:${scope.id}`,
         audience: api.audience,
+        apiName: api.name,
+        apiDescription: api.description,
         resource: api.resource,
         enabled: scope.enabled && api.enabled,
       })),

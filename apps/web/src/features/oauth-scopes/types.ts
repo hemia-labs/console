@@ -8,10 +8,15 @@ export type OAuthScope = {
   kind: "protocol" | "api";
 };
 export type ApiScope = OAuthScope &
-  ScopeReference & { resource: string | null };
+  ScopeReference & {
+    resource: string | null;
+    apiName?: string;
+    apiDescription?: string;
+  };
 export type OAuthApi = {
   id: string;
   name: string;
+  description?: string;
   audience: string;
   resource: string | null;
   enabled: boolean;
@@ -32,6 +37,8 @@ export function resolveApiScopes(
         ...scope,
         id: `${api.id}:${scope.id}`,
         audience: api.audience,
+        apiName: api.name,
+        apiDescription: api.description,
         resource: api.resource,
         enabled: scope.enabled && api.enabled,
       })),

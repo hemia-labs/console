@@ -35,6 +35,12 @@ type LegalOptions = {
 };
 type Choices = {
   oauthIssuer: string;
+  scopes: {
+    code: string;
+    audience: string;
+    resource: string | null;
+    enabled: boolean;
+  }[];
   verificationClientId?: string;
   clients: { clientId: string }[];
 };
@@ -77,10 +83,21 @@ export class SystemConnectionsService {
       this.activateLocked(req, dto, assertHeld),
     );
   }
+  preview(req: ConsoleRequest, dto: SystemConnectionDto) {
+    return this.lock.run((assertHeld) =>
+      this.activateLocked(req, dto, assertHeld, 'preview'),
+    );
+  }
+  check(req: ConsoleRequest, dto: SystemConnectionDto) {
+    return this.lock.run((assertHeld) =>
+      this.activateLocked(req, dto, assertHeld, 'check'),
+    );
+  }
   private async activateLocked(
     req: ConsoleRequest,
     dto: SystemConnectionDto,
     assertHeld: () => Promise<void>,
+    mode: 'save' | 'preview' | 'check' = 'save',
   ) {
     const data = await this.options(req);
     const system = data.systems.find((s) => s.id === dto.systemId && s.enabled);
@@ -417,13 +434,18 @@ export class SystemConnectionsService {
     const check = checkCode
       ? service(checkCode, 'comprobar el backend')
       : undefined;
-    const context = collector
-      ? service(
-          next.configuration.legalAcceptances?.contextService,
-          'verificar el contexto',
-        )
-      : undefined;
+    // Registration collectors attest acceptance without an existing session.
+    // Checkout and explicitly configured callbacks still require verification.
+    const context =
+      collector &&
+      (checkout || next.configuration.legalAcceptances?.contextService)
+        ? service(
+            next.configuration.legalAcceptances?.contextService,
+            'verificar el contexto',
+          )
+        : undefined;
     const incoming = receiver ?? check ?? context;
+    const verifyBackend = Boolean(check && checkout && hasCatalog);
     if (context && incoming && context.audience !== incoming.audience)
       return fail('Los servicios del mismo backend deben compartir audiencia.');
     if (checkout) {
@@ -600,9 +622,29 @@ export class SystemConnectionsService {
       req,
       draft,
     );
-    const configuration: Record<string, string> = {};
+    const directLegal =
+      roles('legalAcceptances').length > 0 &&
+      (!payments.length ||
+        roles('legalAcceptances').some((role) => role !== 'collector'));
+    const directOAuth =
+      !payments.length ||
+      directLegal ||
+      dto.capabilities.some(
+        (selection) =>
+          !['payments', 'legalAcceptances'].includes(selection.code),
+      );
+    const configuration: Record<string, string> = directOAuth
+      ? {
+          HEMIA_IDENTITY_ISSUER: choices.oauthIssuer,
+          HEMIA_TOKEN_URL: new URL(
+            this.config.getOrThrow<string>('hemiaId.service.tokenUrl'),
+            choices.oauthIssuer,
+          ).href,
+          HEMIA_CLIENT_ID: clientId,
+        }
+      : {};
     let connection: Record<string, unknown> | undefined;
-    if (consumerOperations) {
+    if (payments.length) {
       const base = this.billing.baseUrl();
       connection = {
         issuer: choices.oauthIssuer,
@@ -619,10 +661,8 @@ export class SystemConnectionsService {
           ? {
               receiver: {
                 audience: incoming.audience,
-                billingClientId: billing!.service.clientId,
-                consoleClientId: this.config.getOrThrow<string>(
-                  'hemiaId.service.clientId',
-                ),
+                ...(receiver ? { billingClientId: billing!.service.clientId } : {}),
+                ...(verifyBackend ? { consoleClientId: consoleId } : {}),
               },
             }
           : {}),
@@ -640,12 +680,7 @@ export class SystemConnectionsService {
               },
             }
           : {}),
-        ...(text(next.configuration.payments.successUrl)
-          ? { successUrl: next.configuration.payments.successUrl }
-          : {}),
-        ...(text(next.configuration.payments.cancelUrl)
-          ? { cancelUrl: next.configuration.payments.cancelUrl }
-          : {}),
+        ...(checkout ? { successUrl: success, cancelUrl: cancel } : {}),
         ...(base.protocol === 'http:' ? { allowHttpLoopback: true } : {}),
       };
       configuration.PAYMENTS_CONNECTION = JSON.stringify(connection);
@@ -658,12 +693,40 @@ export class SystemConnectionsService {
           jwksUrl: new URL('/.well-known/jwks.json', choices.oauthIssuer).href,
         }
       : undefined;
-    if (legalConnection)
-      Object.assign(configuration, {
-        LEGAL_API_BASE_URL: legalConnection.baseUrl,
-        LEGAL_CONTEXT_IDENTITY_ISSUER: legalConnection.identityIssuer,
-        LEGAL_CONTEXT_JWKS_URL: legalConnection.jwksUrl,
-      });
+    if (directLegal) {
+      configuration.LEGAL_API_BASE_URL = new URL(
+        this.config.getOrThrow<string>('legalAdmin.baseUrl'),
+      ).origin;
+      configuration.LEGAL_API_AUDIENCE = 'legal-api';
+      configuration.LEGAL_SCOPES = [
+        ...new Set(
+          data.capabilities
+            .find((capability) => capability.code === 'legalAcceptances')!
+            .functions.filter((fn) =>
+              roles('legalAcceptances').includes(fn.code),
+            )
+            .flatMap((fn) =>
+              fn.scopes
+                .filter((scope) => scope.audience === 'legal-api')
+                .map((scope) => scope.code),
+            ),
+        ),
+      ].join(' ');
+    }
+    const referenceableCode = /^[a-z][a-z0-9_-]{1,79}$/.test(system.code) && system.code !== 'discovery';
+    const snapshot = payments.includes('catalog') && !directOAuth && referenceableCode && connection && policy
+      ? { version: 1 as const, configuration: connection }
+      : undefined;
+    const connectionReference = snapshot ? {
+      configuration: {
+        HEMIA_BASE_URL: this.billing.baseUrl().origin,
+        HEMIA_CONNECTION: system.code,
+        HEMIA_CLIENT_ID: clientId,
+      },
+      published: isDeepStrictEqual(previous?.connections?.[system.code], snapshot),
+      sdkVersion: '0.11.0',
+    } : undefined;
+    if (snapshot && policy) policy.connections = { [system.code]: snapshot };
     const operations: [string, () => Promise<unknown>][] = [
       [
         'Sistema y funciones',
@@ -719,7 +782,6 @@ export class SystemConnectionsService {
             ),
         ],
       );
-    const verifyBackend = Boolean(check && checkout && hasCatalog);
     if (verifyBackend)
       operations.push([
         'Configuración del backend',
@@ -746,8 +808,18 @@ export class SystemConnectionsService {
             result.productCode !== productCode ||
             !result.connection ||
             Object.entries(connection!).some(
-              ([key, value]) =>
-                !isDeepStrictEqual(result.connection[key], value),
+              ([key, value]) => {
+                if (key === 'receiver') {
+                  const installed = result.connection[key];
+                  return !installed || typeof installed !== 'object' || Array.isArray(installed) ||
+                    Object.entries(value as Record<string, unknown>).some(
+                      ([field, expected]) => !isDeepStrictEqual(
+                        (installed as Record<string, unknown>)[field], expected,
+                      ),
+                    );
+                }
+                return !isDeepStrictEqual(result.connection[key], value);
+              },
             ) ||
             (legalConnection !== undefined &&
               (!result.legalConnection ||
@@ -760,20 +832,233 @@ export class SystemConnectionsService {
             );
         },
       ]);
+    const stepInfo = (name: string) => ({
+      service:
+        name === 'Sistema y funciones'
+          ? 'Identity'
+          : name === 'Aplicación y documentos'
+            ? 'Legal'
+            : name === 'Configuración del backend'
+              ? 'Aplicación'
+              : 'Billing',
+      kind: ['Contrato de recepción', 'Configuración del backend'].includes(
+        name,
+      )
+        ? ('verification' as const)
+        : ('configuration' as const),
+    });
+    if (mode === 'preview')
+      return {
+        ready: false,
+        status: 'preview' as const,
+        mode,
+        steps: operations.map(([name]) => ({
+          name,
+          state: 'pending' as const,
+          ...stepInfo(name),
+        })),
+        configuration,
+        ...(connectionReference ? { connectionReference } : {}),
+        secretVariable: 'HEMIA_CLIENT_SECRET',
+      };
     const steps: {
       name: string;
       state: 'done' | 'pending';
       message?: string;
+      service: string;
+      kind: 'configuration' | 'verification';
     }[] = [];
+    if (mode === 'check') {
+      const inspections: [string, () => boolean][] = [
+        [
+          'Sistema y funciones',
+          () =>
+            dto.capabilities.every(
+              (selection) =>
+                system.clients.some(
+                  (binding) =>
+                    binding.enabled &&
+                    binding.oauthIssuer === choices.oauthIssuer &&
+                    binding.clientId === clientId &&
+                    binding.capabilityCode === selection.code &&
+                    selection.functions.every((role) =>
+                      binding.roles.includes(role),
+                    ),
+                ) &&
+                Object.entries(next.configuration[selection.code] ?? {}).every(
+                  ([key, value]) =>
+                    isDeepStrictEqual(
+                      system.configuration[selection.code]?.[key],
+                      value,
+                    ),
+                ) &&
+                selection.functions.every((role) =>
+                  data.capabilities
+                    .find((c) => c.code === selection.code)!
+                    .functions.find((f) => f.code === role)!
+                    .scopes.every((ref) => {
+                      const scope = choices.scopes.find(
+                        (entry) =>
+                          entry.code === ref.code &&
+                          entry.audience === ref.audience &&
+                          entry.enabled,
+                      );
+                      return (
+                        scope?.resource &&
+                        ((consumer.audience === ref.audience &&
+                          consumer.scopes?.includes(ref.code)) ||
+                          consumer.serviceDestinations?.some(
+                            (destination) =>
+                              destination.audience === ref.audience &&
+                              destination.resource === scope.resource &&
+                              destination.scopes.includes(ref.code),
+                          ))
+                      );
+                    }),
+                ),
+            ) &&
+            next.clients.every(
+              (binding) =>
+                !binding.enabled ||
+                system.clients.some(
+                  (current) =>
+                    current.enabled &&
+                    current.oauthIssuer === binding.oauthIssuer &&
+                    current.clientId === binding.clientId &&
+                    current.capabilityCode === binding.capabilityCode &&
+                    binding.roles.every((role) => current.roles.includes(role)),
+                ),
+            ) &&
+            next.services.every(
+              (service) =>
+                !service.enabled ||
+                system.services.some(
+                  (current) =>
+                    current.enabled &&
+                    current.code === service.code &&
+                    current.url === service.url &&
+                    current.audience === service.audience &&
+                    current.resource === service.resource,
+                ),
+            ),
+        ],
+      ];
+      if (policy)
+        inspections.push([
+          'Autorización de Billing',
+          () =>
+            Boolean(
+              previous?.enabled &&
+              policy.products.every((p) => previous.products.includes(p)) &&
+              previous.organizationScope === policy.organizationScope &&
+              isDeepStrictEqual(
+                [...(previous.organizationIds ?? [])].sort(),
+                [...(policy.organizationIds ?? [])].sort(),
+              ) &&
+              policy.allowedReturnOrigins.every((origin) =>
+                previous.allowedReturnOrigins.includes(origin),
+              ),
+            ),
+        ]);
+      if (collector)
+        inspections.push([
+          'Aplicación y documentos',
+          () =>
+            Boolean(
+              currentIntegration &&
+              currentIntegration.applicationId === integration!.applicationId &&
+              isDeepStrictEqual(
+                [...currentIntegration.documentIds].sort(),
+                [...integration!.documentIds].sort(),
+              ),
+            ),
+        ]);
+      if (connectionReference)
+        inspections.push([
+          'Configuración de la conexión',
+          () => connectionReference.published,
+        ]);
+      if (receiver)
+        inspections.push([
+          'Receptor de licencias',
+          () =>
+            billing!.receivers.some(
+              (entry) =>
+                entry.enabled &&
+                entry.productCode === productCode &&
+                entry.url === receiver.url &&
+                entry.audience === receiver.audience &&
+                entry.resource === receiver.resource,
+            ),
+        ]);
+      for (const [name, matches] of inspections) {
+        const configured = matches();
+        steps.push({
+          name,
+          state: configured ? 'done' : 'pending',
+          ...stepInfo(name),
+          ...(configured
+            ? {}
+            : {
+                message:
+                  'La configuración guardada no coincide. Revisa los datos y guarda los cambios antes de comprobar el backend.',
+              }),
+        });
+      }
+      if (steps.every((step) => step.state === 'done')) {
+        for (const [name, operation] of operations.filter(
+          ([name]) => stepInfo(name).kind === 'verification',
+        )) {
+          try {
+            await assertHeld();
+            await operation();
+            steps.push({ name, state: 'done', ...stepInfo(name) });
+          } catch (error) {
+            steps.push({
+              name,
+              state: 'pending',
+              message:
+                error instanceof Error
+                  ? error.message
+                  : 'No se pudo comprobar el servicio.',
+              ...stepInfo(name),
+            });
+          }
+        }
+      }
+      const pending = steps.some((step) => step.state === 'pending');
+      const verified =
+        !pending &&
+        verifyBackend &&
+        dto.capabilities.every((c) =>
+          ['payments', 'legalAcceptances'].includes(c.code),
+        );
+      return {
+        ready: verified,
+        status: pending
+          ? ('pending' as const)
+          : verified
+            ? ('verified' as const)
+            : ('configured' as const),
+        mode,
+        steps,
+        configuration,
+        ...(connectionReference ? { connectionReference } : {}),
+        secretVariable: 'HEMIA_CLIENT_SECRET',
+      };
+    }
     for (const [name, operation] of operations) {
       try {
         await assertHeld();
         await operation();
-        steps.push({ name, state: 'done' });
+        if (name === 'Autorización de Billing' && connectionReference)
+          connectionReference.published = true;
+        steps.push({ name, state: 'done', ...stepInfo(name) });
       } catch (error) {
         steps.push({
           name,
           state: 'pending',
+          ...stepInfo(name),
           message:
             error instanceof Error
               ? error.message
@@ -782,8 +1067,10 @@ export class SystemConnectionsService {
         return {
           ready: false,
           status: 'pending' as const,
+          mode,
           steps,
           configuration,
+          ...(connectionReference ? { connectionReference } : {}),
           secretVariable: 'HEMIA_CLIENT_SECRET',
         };
       }
@@ -796,8 +1083,10 @@ export class SystemConnectionsService {
     return {
       ready: verified,
       status: verified ? ('verified' as const) : ('configured' as const),
+      mode,
       steps,
       configuration,
+      ...(connectionReference ? { connectionReference } : {}),
       secretVariable: 'HEMIA_CLIENT_SECRET',
     };
   }

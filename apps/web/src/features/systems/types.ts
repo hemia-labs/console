@@ -66,6 +66,7 @@ export type CatalogChoices = {
     oauthIssuer: string;
     clientId: string;
     name: string;
+    description?: string;
     scopes: string[];
     audience?: string;
     serviceDestinations?:
