@@ -24,7 +24,7 @@ import { readSchema } from "../../apps/web/src/features/systems/types";
 import { ConnectionReview, connectionReviewIssues } from "../../apps/web/src/features/systems/connection-review";
 import { ConnectionDeliveryResult } from "../../apps/web/src/features/systems/connection-delivery";
 import { connectionEnv } from "../../apps/web/src/features/systems/connection-delivery-model";
-import { parse as parseEnv } from "../../apps/api/node_modules/dotenv";
+import { parseEnv } from "node:util";
 import { ConfigurationFileView } from "../../apps/web/src/features/systems/connection-configuration-view";
 const options: ConnectionOptions = {
   systems: [
