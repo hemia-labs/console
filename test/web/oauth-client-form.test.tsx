@@ -33,6 +33,12 @@ function render(value = client, pending = false) {
 }
 
 describe("OAuth client editing", () => {
+  test("descriptive metadata is editable and preserves an intentional clear", () => {
+    const state = initialState({ ...client, name: "Integraciones de Medsync", description: "Consulta planes" });
+    expect(state.name).toBe("Integraciones de Medsync");
+    expect(render({ ...client, name: state.name, description: state.description })).toContain("¿Para qué se utiliza este cliente OAuth?");
+    expect(buildPayload({ ...state, name: "  Medsync  ", description: " " })).toMatchObject({ name: "Medsync", description: "" });
+  });
   test("does not preselect new permissions or flows for existing empty lists", () => {
     const html = render();
     expect(html).toContain("Selecciona los flujos");

@@ -6,8 +6,11 @@ import {
   ArrayMinSize,
   ArrayMaxSize,
   ArrayUnique,
+  IsOptional,
 } from 'class-validator';
 export class CreateCapabilityClientDto {
+  @IsOptional() @IsString() @Length(0, 200) name?: string;
+  @IsOptional() @IsString() @Length(0, 2000) description?: string;
   @Matches(/^[a-z][a-zA-Z0-9_]{1,79}$/) capabilityCode: string;
   @IsArray()
   @ArrayMinSize(1)

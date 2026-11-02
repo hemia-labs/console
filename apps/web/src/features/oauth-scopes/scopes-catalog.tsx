@@ -213,11 +213,13 @@ function ScopeForm({
               </Field>
             ))}
           </div>
-          <Field id="scope-description" label="Descripción">
+          <Field id="scope-description" label="¿Qué permite este scope?" help="Explica qué operación autoriza y sobre qué datos actúa. Incluye un ejemplo de uso y los límites relevantes.">
             <textarea
               id="scope-description"
               className={`${textareaClass} min-h-24 font-sans`}
               maxLength={2000}
+              aria-describedby="scope-description-help"
+              placeholder="Ej. Permite consultar los planes publicados del producto autorizado. Se utiliza para mostrar precios; no permite crear cobros ni cambiar suscripciones."
               value={value.description}
               onChange={(e) =>
                 setValue((current) => ({

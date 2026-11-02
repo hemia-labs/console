@@ -93,11 +93,15 @@ export class CapabilityClientsService {
       id: string;
       clientId: string;
       clientSecret: string;
+      name?: string | null;
+      description?: string | null;
     }>({
       method: 'POST',
       path: '/oauth-clients',
       body: {
         clientId: dto.clientId,
+        name: dto.name,
+        description: dto.description,
         audience: destinations[0].audience,
         type: 'confidential',
         grantTypes: ['client_credentials'],
@@ -123,7 +127,8 @@ export class CapabilityClientsService {
       client: {
         id: created.id,
         clientId: created.clientId,
-        name: created.clientId,
+        name: created.name || dto.name || created.clientId,
+        description: created.description || dto.description || '',
         oauthIssuer: choices.oauthIssuer,
         scopes: [],
         serviceDestinations: destinations,

@@ -13,6 +13,7 @@ import {
   IsOptional,
   IsString,
   IsUrl,
+  MaxLength,
 } from 'class-validator';
 import { OAuthClientStatus } from '../types/oauth-client-status';
 import { OAuthClientType } from '../types/oauth-client-type';
@@ -34,6 +35,16 @@ export class CreateOAuthClientDto {
 
   @IsString({ message: 'El clientId debe ser una cadena de texto' })
   clientId: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  description?: string;
 
   @IsString({ message: 'El audience debe ser una cadena de texto' })
   audience: string;

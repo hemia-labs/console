@@ -11,6 +11,8 @@ export type OAuthServiceDestination = {
 };
 
 export type IdentityOAuthClient = {
+  name?: string | null;
+  description?: string | null;
   serviceDestinations?: OAuthServiceDestination[] | null;
   audience: string;
   clientId: string;
@@ -36,6 +38,8 @@ export type OAuthClientListQuery = {
 export type OAuthClientListField = "redirectUris" | "scopes" | "grantTypes" | "responseTypes";
 
 export type CreateOAuthClientPayload = {
+  name?: string;
+  description?: string;
   serviceDestinations?: OAuthServiceDestination[] | null;
   audience: string;
   clientId: string;

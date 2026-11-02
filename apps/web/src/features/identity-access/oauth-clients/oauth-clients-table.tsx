@@ -87,19 +87,19 @@ export function OAuthClientsTable({
   return (
     <Table className="min-w-[1280px] table-fixed">
       <colgroup>
-        <col className="w-[18%]" />
-        <col className="w-[18%]" />
+        <col className="w-[26%]" />
+        <col className="w-[16%]" />
         <col className="w-[8%]" />
         <col className="w-[8%]" />
-        <col className="w-[12%]" />
-        <col className="w-[18%]" />
-        <col className="w-[12%]" />
+        <col className="w-[10%]" />
+        <col className="w-[16%]" />
+        <col className="w-[10%]" />
         <col className="w-[6%]" />
       </colgroup>
       <TableHeader>
         <TableRow className="bg-muted/30 hover:bg-muted/30">
           <TableHead className="px-4 py-3 text-xs font-semibold text-muted-foreground">
-            Client ID
+            Cliente OAuth
           </TableHead>
           <TableHead className="px-4 py-3 text-xs font-semibold text-muted-foreground">
             Audiencias / destinos
@@ -138,14 +138,16 @@ export function OAuthClientsTable({
 
           return (
             <TableRow className="h-[72px] hover:bg-muted/30" key={id || client.clientId}>
-              <TableCell className="px-4 py-3">
+              <TableCell className="whitespace-normal px-4 py-3">
                 <Link
-                  className="block max-w-52 truncate text-sm font-semibold text-foreground hover:text-white hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                  className="block max-w-full break-words text-sm font-semibold text-foreground hover:text-white hover:underline focus-visible:outline-2 focus-visible:outline-ring"
                   title={client.clientId}
                   href={localizedHref(locale, `/identity/oauth-clients/${id}`)}
                 >
-                  {client.clientId}
+                  {client.name || client.clientId}
                 </Link>
+                {client.name && <p className="mt-1 truncate font-mono text-xs text-muted-foreground" title={client.clientId}>{client.clientId}</p>}
+                <p className="mt-1 line-clamp-3 break-words text-xs text-muted-foreground" title={client.description || undefined}>{client.description || "Sin descripción de su función"}</p>
               </TableCell>
               <TableCell className="px-4 py-3 text-sm">
                 {destinations.length ? (

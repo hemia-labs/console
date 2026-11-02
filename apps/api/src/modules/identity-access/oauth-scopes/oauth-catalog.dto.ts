@@ -3,6 +3,7 @@ import {
   ArrayUnique,
   IsArray,
   IsBoolean,
+  IsOptional,
   IsString,
   Length,
   Matches,
@@ -18,6 +19,7 @@ export class SaveOAuthScopeDto {
 }
 export class SaveOAuthApiDto {
   @IsString() @Length(1, 200) name: string;
+  @IsOptional() @IsString() @Length(0, 2000) description?: string;
   @IsString() @Length(1, 160) @Matches(/^\S+$/) audience: string;
   @IsString() @Length(1, 2048) resource: string;
   @IsBoolean() enabled: boolean;

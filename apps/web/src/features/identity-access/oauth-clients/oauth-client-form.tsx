@@ -245,6 +245,8 @@ function OAuthMultiSelect({
 }
 
 export type OAuthClientFormState = {
+  name: string;
+  description: string;
   destinationMode: boolean;
   serviceDestinations: OAuthServiceDestination[];
   hadServiceDestinations: boolean;
@@ -271,6 +273,8 @@ export function initialState(
     })),
     audience: client?.audience ? String(client.audience) : "",
     clientId: client?.clientId ? String(client.clientId) : "",
+    name: client?.name ?? "",
+    description: client?.description ?? "",
     grantTypes: client
       ? (client.grantTypes ?? []).map(String)
       : ["authorization_code", "client_credentials", "refresh_token"],
@@ -302,6 +306,8 @@ export function buildPayload(
         : {}),
     audience: form.audience.trim(),
     clientId: form.clientId.trim(),
+    name: form.name.trim(),
+    description: form.description.trim(),
     grantTypes: form.grantTypes,
     redirectUris: parseLines(form.redirectUris),
     requiresConsent: form.requiresConsent,
@@ -433,6 +439,20 @@ export function OAuthClientForm({
               </p>
             </div>
             <div className="grid min-w-0 gap-5 sm:grid-cols-2">
+              <FormField htmlFor="client-name" label="Nombre del cliente OAuth">
+                <Input id="client-name" className="h-10 bg-card" maxLength={200}
+                  placeholder="Ej. Integraciones de mi aplicación" value={form.name}
+                  onChange={(event) => update("name", event.target.value)} />
+              </FormField>
+              <div className="sm:col-span-2">
+                <FormField htmlFor="client-description" label="¿Para qué se utiliza este cliente OAuth?">
+                  <Textarea id="client-description" maxLength={2000} rows={3}
+                    aria-describedby="client-description-help"
+                    placeholder="Ej. Permite a la aplicación consultar planes y registrar la aceptación de documentos en los servicios seleccionados."
+                    value={form.description} onChange={(event) => update("description", event.target.value)} />
+                </FormField>
+                <p id="client-description-help" className="mt-2 text-xs text-muted-foreground">Describe qué sistema lo utiliza y qué operaciones realiza. Esta descripción sirve para identificarlo al configurar una integración.</p>
+              </div>
               <FormField htmlFor="clientId" label="ID del cliente *">
                 <Input
                   className="h-10 bg-card"

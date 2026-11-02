@@ -315,11 +315,11 @@ export function OAuthClientDetailClient({
       <PageHeader className="items-start sm:items-center">
         <PageHeaderContent>
           <div className="flex flex-wrap items-center gap-3">
-            <PageHeaderHeading className="break-all text-2xl font-bold text-heading">{client.clientId}</PageHeaderHeading>
+            <PageHeaderHeading className="break-all text-2xl font-bold text-heading">{client.name || client.clientId}</PageHeaderHeading>
             <CopyClientIdButton {...copyFeedback} />
             <OAuthClientStatusBadge status={status} />
           </div>
-          <PageHeaderDescription>Configuración y acceso de esta aplicación a Hemia.</PageHeaderDescription>
+          <PageHeaderDescription>{client.description || "Agrega una descripción para explicar qué sistema utiliza este cliente OAuth y para qué."}</PageHeaderDescription>
         </PageHeaderContent>
         <PageHeaderActions>
           <Button className="h-10 px-4" render={<Link href={localizedHref(locale, `/identity/oauth-clients/${client.id}/edit`)} />}>

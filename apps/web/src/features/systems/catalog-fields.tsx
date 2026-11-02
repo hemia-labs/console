@@ -52,7 +52,7 @@ export function Choice({
   id: string;
   value: string;
   onChange: (v: string) => void;
-  options: { value: string; label: string }[];
+  options: { value: string; label: string; description?: string }[];
   placeholder?: string;
   disabled?: boolean;
   describedBy?: string;
@@ -70,7 +70,12 @@ export function Choice({
       <SelectContent>
         {options.map((o) => (
           <SelectItem key={o.value} value={o.value}>
-            {o.label}
+            {o.description ? (
+              <span className="block max-w-2xl space-y-1 whitespace-normal py-1">
+                <span className="block font-medium">{o.label}</span>
+                <span className="block text-xs text-muted-foreground">{o.description}</span>
+              </span>
+            ) : o.label}
           </SelectItem>
         ))}
       </SelectContent>

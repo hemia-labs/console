@@ -59,9 +59,10 @@ export function createCapabilityClient(
   capabilityCode: string,
   roles: string[],
   clientId: string,
+  metadata?: { name: string; description: string },
 ) {
   return consoleApi.post<{
     client: CatalogChoices["clients"][number];
     clientSecret: string;
-  }>(`${catalogPath}/clients`, { capabilityCode, roles, clientId });
+  }>(`${catalogPath}/clients`, { capabilityCode, roles, clientId, ...metadata });
 }

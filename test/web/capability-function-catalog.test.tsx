@@ -76,7 +76,7 @@ test("system clients use any configured capability and function and offer Identi
   );
   expect(html).toContain("Notificaciones");
   expect(html).toContain("Enviar notificaciones");
-  expect(html).toContain("Crear cliente en Identity");
+  expect(html).toContain("Crear cliente OAuth en Identity");
   expect(html).toContain(scope.code);
   expect(html).not.toContain("Registrar aceptaciones");
   expect(html).not.toContain("Billing");

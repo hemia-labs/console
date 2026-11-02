@@ -31,6 +31,7 @@ export type IdentityClient = {
   id: string;
   clientId: string;
   audience: string;
+  scopes?: string[];
   status: string;
   type: string;
   grantTypes: string[];

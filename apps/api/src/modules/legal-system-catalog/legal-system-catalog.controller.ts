@@ -91,6 +91,32 @@ export class LegalSystemCatalogController {
   legalOptions(@Req() req: ConsoleRequest) {
     return this.connections.legalOptions(req);
   }
+  @Post('connections/preview') @Header('Cache-Control', 'no-store') preview(
+    @Req() req: ConsoleRequest,
+    @Body(
+      new ValidationPipe({
+        transform: true,
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      }),
+    )
+    dto: SystemConnectionDto,
+  ) {
+    return this.connections.preview(req, dto);
+  }
+  @Post('connections/check') @Header('Cache-Control', 'no-store') check(
+    @Req() req: ConsoleRequest,
+    @Body(
+      new ValidationPipe({
+        transform: true,
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      }),
+    )
+    dto: SystemConnectionDto,
+  ) {
+    return this.connections.check(req, dto);
+  }
   @Post('connections/activate') @Header('Cache-Control', 'no-store') activate(
     @Req() req: ConsoleRequest,
     @Body(

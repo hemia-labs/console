@@ -17,7 +17,7 @@ export default async function Page({
         title={
           query.preset === "payments" ? "Conectar pagos" : "Conectar sistema"
         }
-        description="Elige funciones, completa su configuración y guarda la conexión."
+        description="Conecta tu sistema a los servicios Hemia."
         actions={
           <Button
             variant="outline"

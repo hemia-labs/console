@@ -374,7 +374,7 @@ test("legal client setup is scoped to its capability and kept for existing clien
         cancelHref="/es/catalogs/systems"
       />,
     );
-    expect(html).toContain("Clientes del sistema");
+    expect(html).toContain("Clientes OAuth del sistema");
     expect(html).toContain("Registrar aceptaciones");
     expect(html).toContain("Cliente habilitado");
   }
@@ -552,8 +552,8 @@ test("legal capability exposes its schema, contextual authorization and Identity
   expect(html).toContain('id="config-legalAcceptances-productCode"');
   expect(html).toContain('id="config-legalAcceptances-contextService"');
   expect(html).not.toContain("Autorizar consultas de Legal");
-  expect(html).toContain("Administrar clientes en Identity");
+  expect(html).toContain("Administrar clientes OAuth en Identity");
   expect(html).toContain(
-    "Reutiliza el cliente del backend. Al guardar se asignan los permisos seleccionados.",
+    "Selecciona el cliente OAuth del sistema. Al guardar se asignan los permisos seleccionados.",
   );
 });
