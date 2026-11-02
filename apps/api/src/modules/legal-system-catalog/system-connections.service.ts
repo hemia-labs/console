@@ -661,7 +661,9 @@ export class SystemConnectionsService {
           ? {
               receiver: {
                 audience: incoming.audience,
-                ...(receiver ? { billingClientId: billing!.service.clientId } : {}),
+                ...(receiver
+                  ? { billingClientId: billing!.service.clientId }
+                  : {}),
                 ...(verifyBackend ? { consoleClientId: consoleId } : {}),
               },
             }
@@ -713,19 +715,31 @@ export class SystemConnectionsService {
         ),
       ].join(' ');
     }
-    const referenceableCode = /^[a-z][a-z0-9_-]{1,79}$/.test(system.code) && system.code !== 'discovery';
-    const snapshot = payments.includes('catalog') && !directOAuth && referenceableCode && connection && policy
-      ? { version: 1 as const, configuration: connection }
+    const referenceableCode =
+      /^[a-z][a-z0-9_-]{1,79}$/.test(system.code) &&
+      system.code !== 'discovery';
+    const snapshot =
+      payments.includes('catalog') &&
+      !directOAuth &&
+      referenceableCode &&
+      connection &&
+      policy
+        ? { version: 1 as const, configuration: connection }
+        : undefined;
+    const connectionReference = snapshot
+      ? {
+          configuration: {
+            HEMIA_BASE_URL: this.billing.baseUrl().origin,
+            HEMIA_CONNECTION: system.code,
+            HEMIA_CLIENT_ID: clientId,
+          },
+          published: isDeepStrictEqual(
+            previous?.connections?.[system.code],
+            snapshot,
+          ),
+          sdkVersion: '0.11.0',
+        }
       : undefined;
-    const connectionReference = snapshot ? {
-      configuration: {
-        HEMIA_BASE_URL: this.billing.baseUrl().origin,
-        HEMIA_CONNECTION: system.code,
-        HEMIA_CLIENT_ID: clientId,
-      },
-      published: isDeepStrictEqual(previous?.connections?.[system.code], snapshot),
-      sdkVersion: '0.11.0',
-    } : undefined;
     if (snapshot && policy) policy.connections = { [system.code]: snapshot };
     const operations: [string, () => Promise<unknown>][] = [
       [
@@ -807,20 +821,24 @@ export class SystemConnectionsService {
             result.clientId !== clientId ||
             result.productCode !== productCode ||
             !result.connection ||
-            Object.entries(connection!).some(
-              ([key, value]) => {
-                if (key === 'receiver') {
-                  const installed = result.connection[key];
-                  return !installed || typeof installed !== 'object' || Array.isArray(installed) ||
-                    Object.entries(value as Record<string, unknown>).some(
-                      ([field, expected]) => !isDeepStrictEqual(
-                        (installed as Record<string, unknown>)[field], expected,
+            Object.entries(connection!).some(([key, value]) => {
+              if (key === 'receiver') {
+                const installed = result.connection[key];
+                return (
+                  !installed ||
+                  typeof installed !== 'object' ||
+                  Array.isArray(installed) ||
+                  Object.entries(value as Record<string, unknown>).some(
+                    ([field, expected]) =>
+                      !isDeepStrictEqual(
+                        (installed as Record<string, unknown>)[field],
+                        expected,
                       ),
-                    );
-                }
-                return !isDeepStrictEqual(result.connection[key], value);
-              },
-            ) ||
+                  )
+                );
+              }
+              return !isDeepStrictEqual(result.connection[key], value);
+            }) ||
             (legalConnection !== undefined &&
               (!result.legalConnection ||
                 Object.entries(legalConnection).some(

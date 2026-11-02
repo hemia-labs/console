@@ -272,7 +272,9 @@ test('arbitrary capability reuses one registered client, preserves existing func
   expect(result.status).toBe('configured');
   expect(result.ready).toBe(false);
   expect(result.configuration).toMatchObject({
-    HEMIA_IDENTITY_ISSUER: 'https://identity.test', HEMIA_TOKEN_URL: 'https://identity.test/oauth/token', HEMIA_CLIENT_ID: 'portal',
+    HEMIA_IDENTITY_ISSUER: 'https://identity.test',
+    HEMIA_TOKEN_URL: 'https://identity.test/oauth/token',
+    HEMIA_CLIENT_ID: 'portal',
   });
   expect(result.configuration).not.toHaveProperty('HEMIA_CLIENT_SECRET');
   expect(f.paymentOptions).not.toHaveBeenCalled();
@@ -298,40 +300,73 @@ test('delivery preview returns real configuration and planned checks without sav
   const result = await f.subject.preview(req, full());
   expect(result.status).toBe('preview');
   expect(Object.keys(result.configuration)).toEqual(['PAYMENTS_CONNECTION']);
-  expect(JSON.parse(result.configuration.PAYMENTS_CONNECTION).clientId).toBe('portal');
-  expect(JSON.parse(result.configuration.PAYMENTS_CONNECTION).legal.baseUrl).toBe('https://legal.test');
+  const connection = JSON.parse(result.configuration.PAYMENTS_CONNECTION) as {
+    clientId: string;
+    legal: { baseUrl: string };
+  };
+  expect(connection.clientId).toBe('portal');
+  expect(connection.legal.baseUrl).toBe('https://legal.test');
   expect(result.configuration).not.toHaveProperty('LEGAL_APPLICATION_ID');
   expect(result.configuration).not.toHaveProperty('LEGAL_DOCUMENT_IDS');
   expect(result.configuration).not.toHaveProperty('HEMIA_CLIENT_SECRET');
   expect(f.oauth.saveWithinLock).not.toHaveBeenCalled();
   expect(f.billing.request).not.toHaveBeenCalled();
-  expect(f.legal.request.mock.calls.every(([method, path]) => method === 'POST' && path.startsWith('systems/validate'))).toBe(true);
+  expect(
+    f.legal.request.mock.calls.every(
+      ([method, path]) =>
+        method === 'POST' && path.startsWith('systems/validate'),
+    ),
+  ).toBe(true);
   expect(f.transport.request).not.toHaveBeenCalled();
 });
 test('checking missing permissions returns pending steps without assigning them or registering receivers', async () => {
   const f = fixture();
-  const result = await f.subject.check(req, { ...simple('payments', ['catalog']), payments: { productCode: 'product' } });
+  const result = await f.subject.check(req, {
+    ...simple('payments', ['catalog']),
+    payments: { productCode: 'product' },
+  });
   expect(result.mode).toBe('check');
   expect(result.status).toBe('pending');
-  expect(result.steps.some((step) => step.service === 'Identity' && step.state === 'pending')).toBe(true);
+  expect(
+    result.steps.some(
+      (step: { service?: string; state: string }) =>
+        step.service === 'Identity' && step.state === 'pending',
+    ),
+  ).toBe(true);
   expect(f.oauth.saveWithinLock).not.toHaveBeenCalled();
   expect(f.billing.request).not.toHaveBeenCalled();
   expect(f.transport.request).not.toHaveBeenCalled();
 });
 test('document selection stays in Legal and direct API access keeps its required OAuth variables', async () => {
   const f = fixture();
-  const selection = { ...simple('legalAcceptances', ['collector']), legal: { applicationId: 'application', documentIds: ['doc'] } };
+  const selection = {
+    ...simple('legalAcceptances', ['collector']),
+    legal: { applicationId: 'application', documentIds: ['doc'] },
+  };
   const preview = await f.subject.preview(req, selection);
   expect(preview.configuration.HEMIA_CLIENT_ID).toBe('portal');
   expect(preview.configuration.LEGAL_API_BASE_URL).toBe('https://legal.test');
   expect(preview.configuration).not.toHaveProperty('PAYMENTS_CONNECTION');
-  for (const removed of ['LEGAL_APPLICATION_ID', 'LEGAL_DOCUMENT_IDS', 'LEGAL_CONTEXT_IDENTITY_ISSUER', 'LEGAL_CONTEXT_JWKS_URL']) expect(preview.configuration).not.toHaveProperty(removed);
+  for (const removed of [
+    'LEGAL_APPLICATION_ID',
+    'LEGAL_DOCUMENT_IDS',
+    'LEGAL_CONTEXT_IDENTITY_ISSUER',
+    'LEGAL_CONTEXT_JWKS_URL',
+  ])
+    expect(preview.configuration).not.toHaveProperty(removed);
   const saved = await f.subject.activate(req, selection);
   expect(saved.configuration).not.toHaveProperty('LEGAL_APPLICATION_ID');
   expect(saved.configuration).not.toHaveProperty('LEGAL_DOCUMENT_IDS');
-  expect(f.legal.request).toHaveBeenCalledWith('PUT', 'integrations', req, { systemId: 'system', applicationId: 'application', documentIds: ['doc'], enabled: true });
+  expect(f.legal.request).toHaveBeenCalledWith('PUT', 'integrations', req, {
+    systemId: 'system',
+    applicationId: 'application',
+    documentIds: ['doc'],
+    enabled: true,
+  });
   const mixed = full();
-  mixed.capabilities.find((c) => c.code === 'legalAcceptances')!.functions.push('validator');
+  mixed.capabilities
+    .find((c) => c.code === 'legalAcceptances')!
+    .functions.push('validator');
   const validator = await fixture().subject.preview(req, mixed);
   expect(validator.configuration).toHaveProperty('PAYMENTS_CONNECTION');
   expect(validator.configuration).toHaveProperty('HEMIA_CLIENT_ID');
@@ -339,22 +374,77 @@ test('document selection stays in Legal and direct API access keeps its required
 });
 test('catalog check confirms its saved policy and scopes without requiring webhooks or backend probes', async () => {
   const f = fixture();
-  const ref = { code: 'billing.integration.catalog.read', audience: 'billing-api' };
-  f.capabilities.find((c) => c.code === 'payments')!.functions.find((fn) => fn.code === 'catalog')!.scopes = [ref];
-  f.system.clients.push({ oauthIssuer: 'https://identity.test', clientId: 'portal', capabilityCode: 'payments', roles: ['catalog'], enabled: true });
-  f.system.configuration.payments = { productCode: 'product' };
-  f.billingOptions.policies.push({ clientId: 'portal', enabled: true, products: ['product'], organizationScope: 'organizations', organizationIds: [], allowedReturnOrigins: [], allowSharedCheckouts: false });
-  f.options.mockResolvedValue({ ...f.data, choices: { ...f.data.choices, scopes: [{ ...ref, enabled: true, resource: 'https://billing.test' }] } } as never);
-  const clients = f.oauth.clients.getMockImplementation()!;
-  f.oauth.clients.mockImplementation(async () => (await clients()).map((client) => client.clientId === 'portal' ? { ...client, serviceDestinations: [{ resource: 'https://billing.test', audience: 'billing-api', scopes: [ref.code] }] } : client));
-  const preview = await f.subject.preview(req, { ...simple('payments', ['catalog']), payments: { productCode: 'product' } });
-  f.billingOptions.policies[0].connections = {
-    portal: { version: 1, configuration: JSON.parse(preview.configuration.PAYMENTS_CONNECTION) },
+  const ref = {
+    code: 'billing.integration.catalog.read',
+    audience: 'billing-api',
   };
-  const result = await f.subject.check(req, { ...simple('payments', ['catalog']), payments: { productCode: 'product' } });
+  f.capabilities
+    .find((c) => c.code === 'payments')!
+    .functions.find((fn) => fn.code === 'catalog')!.scopes = [ref];
+  f.system.clients.push({
+    oauthIssuer: 'https://identity.test',
+    clientId: 'portal',
+    capabilityCode: 'payments',
+    roles: ['catalog'],
+    enabled: true,
+  });
+  f.system.configuration.payments = { productCode: 'product' };
+  f.billingOptions.policies.push({
+    clientId: 'portal',
+    enabled: true,
+    products: ['product'],
+    organizationScope: 'organizations',
+    organizationIds: [],
+    allowedReturnOrigins: [],
+    allowSharedCheckouts: false,
+  });
+  f.options.mockResolvedValue({
+    ...f.data,
+    choices: {
+      ...f.data.choices,
+      scopes: [{ ...ref, enabled: true, resource: 'https://billing.test' }],
+    },
+  } as never);
+  const clients = f.oauth.clients.getMockImplementation()!;
+  f.oauth.clients.mockImplementation(async () =>
+    (await clients()).map((client) =>
+      client.clientId === 'portal'
+        ? {
+            ...client,
+            serviceDestinations: [
+              {
+                resource: 'https://billing.test',
+                audience: 'billing-api',
+                scopes: [ref.code],
+              },
+            ],
+          }
+        : client,
+    ),
+  );
+  const preview = await f.subject.preview(req, {
+    ...simple('payments', ['catalog']),
+    payments: { productCode: 'product' },
+  });
+  f.billingOptions.policies[0].connections = {
+    portal: {
+      version: 1,
+      configuration: JSON.parse(
+        preview.configuration.PAYMENTS_CONNECTION,
+      ) as Record<string, unknown>,
+    },
+  };
+  const result = await f.subject.check(req, {
+    ...simple('payments', ['catalog']),
+    payments: { productCode: 'product' },
+  });
   expect(result.status).toBe('configured');
   expect(result.ready).toBe(false);
-  expect(result.steps.every((step) => step.state === 'done' && step.kind === 'configuration')).toBe(true);
+  expect(
+    result.steps.every(
+      (step) => step.state === 'done' && step.kind === 'configuration',
+    ),
+  ).toBe(true);
   expect(f.oauth.saveWithinLock).not.toHaveBeenCalled();
   expect(f.billing.request).not.toHaveBeenCalled();
   expect(f.transport.request).not.toHaveBeenCalled();
@@ -366,34 +456,65 @@ test('catalog delivery publishes its own connection snapshot and provides a four
   dto.payments = { productCode: 'product' };
   const preview = await f.subject.preview(req, dto);
   expect(preview.connectionReference).toEqual({
-    configuration: { HEMIA_BASE_URL: 'https://billing.test', HEMIA_CONNECTION: 'portal', HEMIA_CLIENT_ID: 'portal' },
-    published: false, sdkVersion: '0.11.0',
+    configuration: {
+      HEMIA_BASE_URL: 'https://billing.test',
+      HEMIA_CONNECTION: 'portal',
+      HEMIA_CLIENT_ID: 'portal',
+    },
+    published: false,
+    sdkVersion: '0.11.0',
   });
   expect(f.billing.request).not.toHaveBeenCalled();
   const saved = await f.subject.activate(req, dto);
   expect(saved.connectionReference?.published).toBe(true);
-  const published = f.billing.request.mock.calls.find((call) => call[2] === 'clients/portal')![3] as Record<string, unknown>;
-  expect(published.connections).toEqual({ portal: { version: 1, configuration: JSON.parse(saved.configuration.PAYMENTS_CONNECTION) } });
+  const published = f.billing.request.mock.calls.find(
+    (call) => call[2] === 'clients/portal',
+  )![3] as Record<string, unknown>;
+  expect(published.connections).toEqual({
+    portal: {
+      version: 1,
+      configuration: JSON.parse(
+        saved.configuration.PAYMENTS_CONNECTION,
+      ) as Record<string, unknown>,
+    },
+  });
   expect(JSON.stringify(published.connections)).not.toContain('clientSecret');
   const checkout = full();
   checkout.capabilities[0].functions = ['checkout'];
   delete checkout.payments!.receiverService;
   delete checkout.payments!.checkService;
-  expect((await fixture().subject.preview(req, checkout)).connectionReference).toBeUndefined();
+  expect(
+    (await fixture().subject.preview(req, checkout)).connectionReference,
+  ).toBeUndefined();
 });
-test.each(['discovery', 'x'])('catalog keeps explicit configuration for unsupported connection code %s', async (code) => {
-  const f = fixture();
-  f.system.code = code;
-  const dto = { ...simple('payments', ['catalog']), payments: { productCode: 'product' } };
-  const preview = await f.subject.preview(req, dto);
-  expect(preview.connectionReference).toBeUndefined();
-  expect(JSON.parse(preview.configuration.PAYMENTS_CONNECTION).productCode).toBe('product');
-  expect(f.billing.request).not.toHaveBeenCalled();
-  const saved = await f.subject.activate(req, dto);
-  expect(saved.connectionReference).toBeUndefined();
-  const policy = f.billing.request.mock.calls.find((call) => call[2] === 'clients/portal')![3] as Record<string, unknown>;
-  expect(policy.connections).toBeUndefined();
-});
+test.each(['discovery', 'x'])(
+  'catalog keeps explicit configuration for unsupported connection code %s',
+  async (code) => {
+    const f = fixture();
+    f.system.code = code;
+    const dto = {
+      ...simple('payments', ['catalog']),
+      payments: { productCode: 'product' },
+    };
+    const preview = await f.subject.preview(req, dto);
+    expect(preview.connectionReference).toBeUndefined();
+    expect(
+      (
+        JSON.parse(preview.configuration.PAYMENTS_CONNECTION) as Record<
+          string,
+          unknown
+        >
+      ).productCode,
+    ).toBe('product');
+    expect(f.billing.request).not.toHaveBeenCalled();
+    const saved = await f.subject.activate(req, dto);
+    expect(saved.connectionReference).toBeUndefined();
+    const policy = f.billing.request.mock.calls.find(
+      (call) => call[2] === 'clients/portal',
+    )![3] as Record<string, unknown>;
+    expect(policy.connections).toBeUndefined();
+  },
+);
 test('catalog only saves product policy with no organization access, redirects, documents or receiver', async () => {
   const f = fixture();
   const dto = {
@@ -459,8 +580,16 @@ test('receiver only grants verification and registers receiver without consumer 
     'receivers/product/check',
   ]);
   expect(f.legalCatalog).not.toHaveBeenCalled();
-  expect(JSON.parse(result.configuration.PAYMENTS_CONNECTION).receiver).toEqual({
-    audience: 'portal-api', billingClientId: 'billing',
+  expect(
+    (
+      JSON.parse(result.configuration.PAYMENTS_CONNECTION) as Record<
+        string,
+        unknown
+      >
+    ).receiver,
+  ).toEqual({
+    audience: 'portal-api',
+    billingClientId: 'billing',
   });
 });
 test('legal collector and validator do not load Billing and validator does not request documents', async () => {
@@ -644,18 +773,22 @@ test('catalog delivery omits saved checkout returns while preserving them and th
     ...simple('payments', ['catalog']),
     payments: { productCode: 'product' },
   });
-  const generated = JSON.parse(result.configuration.PAYMENTS_CONNECTION);
+  const generated = JSON.parse(
+    result.configuration.PAYMENTS_CONNECTION,
+  ) as Record<string, unknown>;
   expect(generated).not.toHaveProperty('successUrl');
   expect(generated).not.toHaveProperty('cancelUrl');
   expect(generated).not.toHaveProperty('receiver');
   expect(f.oauth.saveWithinLock).toHaveBeenCalledWith(
     req,
-    expect.objectContaining({ configuration: expect.objectContaining({
-      payments: expect.objectContaining({
-        successUrl: 'https://portal.test/paid',
-        cancelUrl: 'https://portal.test/cancel',
-      }),
-    }) }),
+    expect.objectContaining({
+      configuration: expect.objectContaining({
+        payments: expect.objectContaining({
+          successUrl: 'https://portal.test/paid',
+          cancelUrl: 'https://portal.test/cancel',
+        }) as unknown,
+      }) as unknown,
+    }),
     'system',
     f.held,
   );
@@ -735,7 +868,12 @@ test('collector with catalog derives callback audience without receiving license
   expect(generated.legal.verificationClientId).toBe('legal');
   expect(generated).not.toHaveProperty('successUrl');
   expect(generated).not.toHaveProperty('cancelUrl');
-  expect(f.billing.request).not.toHaveBeenCalledWith(req, 'PUT', 'receivers/product', expect.anything());
+  expect(f.billing.request).not.toHaveBeenCalledWith(
+    req,
+    'PUT',
+    'receivers/product',
+    expect.anything(),
+  );
   expect(f.transport.request).not.toHaveBeenCalled();
 });
 
@@ -746,8 +884,16 @@ test('backend verification compares only the selected receiver fields and still 
   const f = fixture();
   const result = await f.subject.activate(req, dto);
   expect(result.status).toBe('verified');
-  expect(JSON.parse(result.configuration.PAYMENTS_CONNECTION).receiver).toEqual({
-    audience: 'portal-api', consoleClientId: 'console',
+  expect(
+    (
+      JSON.parse(result.configuration.PAYMENTS_CONNECTION) as Record<
+        string,
+        unknown
+      >
+    ).receiver,
+  ).toEqual({
+    audience: 'portal-api',
+    consoleClientId: 'console',
   });
   for (const field of ['consoleClientId', 'audience'] as const) {
     const mismatch = fixture();
@@ -772,9 +918,15 @@ test('catalog and registration without a context callback omit receiver and save
   dto.capabilities[0].functions = ['catalog'];
   dto.payments = { productCode: 'product' };
   const result = await f.subject.preview(req, dto);
-  const generated = JSON.parse(result.configuration.PAYMENTS_CONNECTION);
-  expect(generated).toMatchObject({ productCode: 'product', legal: { baseUrl: 'https://legal.test' } });
-  for (const key of ['receiver', 'successUrl', 'cancelUrl']) expect(generated).not.toHaveProperty(key);
+  const generated = JSON.parse(
+    result.configuration.PAYMENTS_CONNECTION,
+  ) as Record<string, unknown>;
+  expect(generated).toMatchObject({
+    productCode: 'product',
+    legal: { baseUrl: 'https://legal.test' },
+  });
+  for (const key of ['receiver', 'successUrl', 'cancelUrl'])
+    expect(generated).not.toHaveProperty(key);
   expect(JSON.stringify(f.system)).toBe(before);
   expect(f.oauth.saveWithinLock).not.toHaveBeenCalled();
   expect(f.billing.request).not.toHaveBeenCalled();

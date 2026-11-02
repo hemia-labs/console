@@ -128,7 +128,7 @@ export class CapabilityClientsService {
         id: created.id,
         clientId: created.clientId,
         name: created.name || dto.name || created.clientId,
-        description: created.description || dto.description || "",
+        description: created.description || dto.description || '',
         oauthIssuer: choices.oauthIssuer,
         scopes: [],
         serviceDestinations: destinations,

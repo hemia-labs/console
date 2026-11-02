@@ -11,10 +11,13 @@ export type BillingPolicy = {
   organizationIds?: string[];
   allowedReturnOrigins: string[];
   allowSharedCheckouts: boolean;
-  connections?: Record<string, {
-    version: 1;
-    configuration: Record<string, unknown>;
-  }>;
+  connections?: Record<
+    string,
+    {
+      version: 1;
+      configuration: Record<string, unknown>;
+    }
+  >;
 };
 export type BillingOptions = {
   service: { audience: string; clientId: string };
