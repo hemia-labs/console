@@ -49,6 +49,7 @@ const fail = (message: string): never => {
 };
 const text = (value: unknown) =>
   typeof value === 'string' ? value : undefined;
+const connectionReadScope = 'billing.integration.connections.read';
 
 @Injectable()
 export class SystemConnectionsService {
@@ -508,7 +509,45 @@ export class SystemConnectionsService {
       await this.oauth.validateService(req, receiver);
     }
     if (check) await this.oauth.validateService(req, check);
-    if (consumerOperations) {
+    const directLegal =
+      roles('legalAcceptances').length > 0 &&
+      (!payments.length ||
+        roles('legalAcceptances').some((role) => role !== 'collector'));
+    const directOAuth =
+      !payments.length ||
+      directLegal ||
+      dto.capabilities.some(
+        (selection) =>
+          !['payments', 'legalAcceptances'].includes(selection.code),
+      );
+    const referenceableCode =
+      /^[a-z][a-z0-9_-]{1,79}$/.test(system.code) &&
+      system.code !== 'discovery';
+    const connectionScope =
+      billing &&
+      choices.scopes.find(
+        (scope) =>
+          scope.code === connectionReadScope &&
+          scope.enabled &&
+          scope.audience === billing.service.audience &&
+          scope.resource === this.billing.baseUrl().origin,
+      );
+    const publishConnection =
+      !directOAuth &&
+      referenceableCode &&
+      connectionScope &&
+      data.capabilities
+        .find((capability) => capability.code === 'payments')
+        ?.functions.some(
+          (fn) =>
+            payments.includes(fn.code) &&
+            fn.scopes.some(
+              (scope) =>
+                scope.code === connectionScope.code &&
+                scope.audience === connectionScope.audience,
+            ),
+        );
+    if (consumerOperations || publishConnection) {
       const scope = organizationRequired
         ? (settings?.organizationScope ?? previous?.organizationScope)
         : (previous?.organizationScope ?? 'organizations');
@@ -622,17 +661,6 @@ export class SystemConnectionsService {
       req,
       draft,
     );
-    const directLegal =
-      roles('legalAcceptances').length > 0 &&
-      (!payments.length ||
-        roles('legalAcceptances').some((role) => role !== 'collector'));
-    const directOAuth =
-      !payments.length ||
-      directLegal ||
-      dto.capabilities.some(
-        (selection) =>
-          !['payments', 'legalAcceptances'].includes(selection.code),
-      );
     const configuration: Record<string, string> = directOAuth
       ? {
           HEMIA_IDENTITY_ISSUER: choices.oauthIssuer,
@@ -715,15 +743,8 @@ export class SystemConnectionsService {
         ),
       ].join(' ');
     }
-    const referenceableCode =
-      /^[a-z][a-z0-9_-]{1,79}$/.test(system.code) &&
-      system.code !== 'discovery';
     const snapshot =
-      payments.includes('catalog') &&
-      !directOAuth &&
-      referenceableCode &&
-      connection &&
-      policy
+      publishConnection && connection && policy
         ? { version: 1 as const, configuration: connection }
         : undefined;
     const connectionReference = snapshot
@@ -737,7 +758,7 @@ export class SystemConnectionsService {
             previous?.connections?.[system.code],
             snapshot,
           ),
-          sdkVersion: '0.11.0',
+          sdkVersion: '0.12.0',
         }
       : undefined;
     if (snapshot && policy) policy.connections = { [system.code]: snapshot };
