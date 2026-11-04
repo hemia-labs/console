@@ -648,7 +648,7 @@ test("delivery links to the selected OAuth client and folds secondary instructio
 });
 
 test("remote connection delivery contains four environment variables and keeps the full configuration under advanced options", () => {
-  const reference = { configuration: { HEMIA_BASE_URL: "https://billing.test", HEMIA_CONNECTION: "product", HEMIA_CLIENT_ID: "backend" }, published: false, sdkVersion: "0.11.0" };
+  const reference = { configuration: { HEMIA_BASE_URL: "https://billing.test", HEMIA_CONNECTION: "product", HEMIA_CLIENT_ID: "backend" }, published: false, sdkVersion: "0.12.0" };
   const page = renderToStaticMarkup(<ConnectionDeliveryResult
     result={{ ready: false, status: "preview", steps: [], configuration: { PAYMENTS_CONNECTION: '{"productCode":"product"}' }, secretVariable: "HEMIA_CLIENT_SECRET", connectionReference: reference }}
     selection={{ payments: ["catalog"], legalAcceptances: ["collector"] }}

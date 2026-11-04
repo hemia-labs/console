@@ -240,7 +240,7 @@ export function ConnectionConfigurationOutput({
             </li>
             <li>
               {remote ? (
-                <>Instala <code>npm install @hemia/payments@^{connectionReference?.sdkVersion || "0.11.0"} @hemia/auth</code> desde npm y usa <code>resolvePaymentsConnection</code>. Consulta el ejemplo de inicialización.</>
+                <>Instala <code>npm install @hemia/payments@^{connectionReference?.sdkVersion || "0.12.0"} @hemia/auth</code> desde npm y usa <code>resolvePaymentsConnection</code>. Consulta el ejemplo de inicialización.</>
               ) : payments ? (
                 <>
                   Instala{" "}

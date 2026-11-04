@@ -449,8 +449,27 @@ test('catalog check confirms its saved policy and scopes without requiring webho
   expect(f.billing.request).not.toHaveBeenCalled();
   expect(f.transport.request).not.toHaveBeenCalled();
 });
-test('catalog delivery publishes its own connection snapshot and provides a four-variable bootstrap without new grants', async () => {
+function referenceFixture(roles = ['catalog']) {
   const f = fixture();
+  const ref = {
+    code: 'billing.integration.connections.read',
+    audience: 'billing-api',
+  };
+  for (const fn of f.capabilities.find((c) => c.code === 'payments')!
+    .functions) {
+    if (roles.includes(fn.code)) fn.scopes.push(ref);
+  }
+  f.options.mockResolvedValue({
+    ...f.data,
+    choices: {
+      ...f.data.choices,
+      scopes: [{ ...ref, resource: 'https://billing.test', enabled: true }],
+    },
+  } as never);
+  return f;
+}
+test('catalog delivery publishes its own connection snapshot with four-variable bootstrap', async () => {
+  const f = referenceFixture();
   const dto = full();
   dto.capabilities[0].functions = ['catalog'];
   dto.payments = { productCode: 'product' };
@@ -462,7 +481,7 @@ test('catalog delivery publishes its own connection snapshot and provides a four
       HEMIA_CLIENT_ID: 'portal',
     },
     published: false,
-    sdkVersion: '0.11.0',
+    sdkVersion: '0.12.0',
   });
   expect(f.billing.request).not.toHaveBeenCalled();
   const saved = await f.subject.activate(req, dto);
@@ -487,10 +506,48 @@ test('catalog delivery publishes its own connection snapshot and provides a four
     (await fixture().subject.preview(req, checkout)).connectionReference,
   ).toBeUndefined();
 });
+test.each(['checkout', 'licenses', 'receiver'] as const)(
+  '%s publishes a connection without selecting catalog access',
+  async (role) => {
+    const f = referenceFixture([role]);
+    const dto = role === 'checkout' ? full() : simple();
+    dto.capabilities[0] = { code: 'payments', functions: [role] };
+    if (role === 'checkout') {
+      delete dto.payments!.receiverService;
+      delete dto.payments!.checkService;
+    } else {
+      dto.payments = {
+        productCode: 'product',
+        ...(role === 'receiver'
+          ? { receiverService: 'license' }
+          : { organizationScope: 'organizations', organizationIds: ['org'] }),
+      };
+    }
+    const preview = await f.subject.preview(req, dto);
+    expect(preview.connectionReference).toMatchObject({
+      published: false,
+      sdkVersion: '0.12.0',
+    });
+    expect(f.billing.request).not.toHaveBeenCalled();
+    expect(f.oauth.saveWithinLock).not.toHaveBeenCalled();
+    const saved = await f.subject.activate(req, dto);
+    expect(saved.connectionReference?.published).toBe(true);
+    const draft = f.oauth.saveWithinLock.mock.calls[0][1] as SystemRecord;
+    expect(
+      draft.clients.find((c) => c.capabilityCode === 'payments')?.roles,
+    ).toEqual([role]);
+    const policy = f.billing.request.mock.calls.find(
+      (call) => call[2] === 'clients/portal',
+    )![3];
+    expect(policy).toHaveProperty('connections.portal.version', 1);
+    if (role === 'receiver')
+      expect(policy).toHaveProperty('organizationIds', []);
+  },
+);
 test.each(['discovery', 'x'])(
   'catalog keeps explicit configuration for unsupported connection code %s',
   async (code) => {
-    const f = fixture();
+    const f = referenceFixture();
     f.system.code = code;
     const dto = {
       ...simple('payments', ['catalog']),
