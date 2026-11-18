@@ -8,6 +8,7 @@ export type SystemRoleCatalog = {
     id?: string;
     code: string;
     name: string;
+    permissions?: string[];
     allowedScopes: { resource: string; consumer: string }[];
   }[];
 };
@@ -43,11 +44,15 @@ export function readCatalogs(value: unknown): SystemRoleCatalog[] {
         throw new Error("Invalid role response");
       const role = item as Record<string, unknown>;
       if (
-        (role.id !== undefined &&
-          (typeof role.id !== "string" || !role.id)) ||
+        (role.id !== undefined && (typeof role.id !== "string" || !role.id)) ||
         typeof role.code !== "string" ||
         !role.code ||
         typeof role.name !== "string" ||
+        (role.permissions !== undefined &&
+          (!Array.isArray(role.permissions) ||
+            role.permissions.some(
+              (item: unknown) => typeof item !== "string",
+            ))) ||
         !Array.isArray(role.allowedScopes) ||
         !role.allowedScopes.length
       )
@@ -73,6 +78,9 @@ export function readCatalogs(value: unknown): SystemRoleCatalog[] {
         ...(role.id ? { id: role.id } : {}),
         code: role.code,
         name: role.name,
+        ...(Array.isArray(role.permissions)
+          ? { permissions: role.permissions as string[] }
+          : {}),
         allowedScopes,
       });
     }

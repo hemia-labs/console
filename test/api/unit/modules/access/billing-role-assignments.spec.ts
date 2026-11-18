@@ -43,3 +43,50 @@ describe('Billing role assignments BFF', () => {
     },
   );
 });
+
+describe('System role assignments BFF', () => {
+  it('uses Access for listing, assigning and revoking with the authenticated operator', async () => {
+    const requestAsUser = jest.fn().mockResolvedValue({});
+    const roles = new RolesService({
+      requestAsUser,
+    } as unknown as AccessAdminClient);
+    const token = 'operator-token';
+    const assignment = {
+      scopeType: 'applications',
+      consumerScopeType: 'organizations',
+      resourceIds: ['application'],
+      organizationIds: ['consumer'],
+    };
+
+    await roles.listSystemRoles('member', token);
+    await roles.createSystemRole(assignment, token);
+    await roles.revokeSystemRole('assignment', { expectedVersion: 3 }, token);
+
+    expect(requestAsUser.mock.calls).toEqual([
+      [
+        {
+          method: 'GET',
+          path: '/v1/system-roles/assignments',
+          query: { membershipId: 'member' },
+        },
+        token,
+      ],
+      [
+        {
+          method: 'POST',
+          path: '/v1/system-roles/assignments',
+          body: assignment,
+        },
+        token,
+      ],
+      [
+        {
+          method: 'POST',
+          path: '/v1/system-roles/assignments/assignment/revoke',
+          body: { expectedVersion: 3 },
+        },
+        token,
+      ],
+    ]);
+  });
+});

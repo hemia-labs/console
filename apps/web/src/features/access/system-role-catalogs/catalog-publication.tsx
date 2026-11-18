@@ -162,6 +162,16 @@ export function CatalogPublication({
                         )
                         .join(", ")}
                     </p>
+                    {role.permissions?.length ? (
+                      <details className="text-xs">
+                        <summary className="cursor-pointer">Ver permisos</summary>
+                        <ul className="mt-1 space-y-1 break-all font-mono text-muted-foreground">
+                          {role.permissions.map((permission) => (
+                            <li key={permission}>{permission}</li>
+                          ))}
+                        </ul>
+                      </details>
+                    ) : null}
                   </li>
                 ))}
               </ul>

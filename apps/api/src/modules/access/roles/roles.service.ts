@@ -15,20 +15,49 @@ export class RolesService {
     dto: AssignBillingRoleDto,
     accessToken: string,
   ): Promise<unknown> {
+    return this.createSystemRole(
+      {
+        membershipId: dto.membershipId,
+        roleId: dto.roleId,
+        scopeType: dto.scopeType,
+        organizationIds:
+          dto.scopeType === 'organizations' ? [dto.organizationId] : [],
+        idempotencyKey: dto.idempotencyKey,
+        validFrom: dto.validFrom,
+        expiresAt: null,
+      },
+      accessToken,
+    );
+  }
+
+  listSystemRoles(membershipId: string, accessToken: string): Promise<unknown> {
+    return this.accessAdminClient.requestAsUser(
+      {
+        method: 'GET',
+        path: '/v1/system-roles/assignments',
+        query: { membershipId },
+      },
+      accessToken,
+    );
+  }
+
+  createSystemRole(body: unknown, accessToken: string): Promise<unknown> {
+    return this.accessAdminClient.requestAsUser(
+      { method: 'POST', path: '/v1/system-roles/assignments', body },
+      accessToken,
+    );
+  }
+
+  revokeSystemRole(
+    id: string,
+    body: unknown,
+    accessToken: string,
+  ): Promise<unknown> {
     return this.accessAdminClient.requestAsUser(
       {
         method: 'POST',
-        path: '/v1/system-roles/assignments',
-        body: {
-          membershipId: dto.membershipId,
-          roleId: dto.roleId,
-          scopeType: dto.scopeType,
-          organizationIds:
-            dto.scopeType === 'organizations' ? [dto.organizationId] : [],
-          idempotencyKey: dto.idempotencyKey,
-          validFrom: dto.validFrom,
-          expiresAt: null,
-        },
+        path: `/v1/system-roles/assignments/${id}/revoke`,
+        body,
       },
       accessToken,
     );
