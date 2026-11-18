@@ -92,7 +92,7 @@ export const nav: NavItem[] = [
       {
         href: "/access/roles",
         label: "Roles y permisos",
-        description: "Asignación de roles de Billing",
+        description: "Asignaciones de roles por sistema",
         icon: KeyRound,
       },
       {

@@ -12,6 +12,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   Req,
   UnsupportedMediaTypeException,
   UseGuards,
@@ -46,12 +47,56 @@ export class RolesController {
     @Req() request: ConsoleRequest,
     @Body() dto: AssignBillingRoleDto,
   ) {
-    if (!request.is('application/json'))
-      throw new UnsupportedMediaTypeException('JSON request required');
+    this.requireJson(request);
     return this.roles.assignBillingRole(
       dto,
       await this.authorization.accessTokenFor(request),
     );
+  }
+
+  @Get('system-role-assignments')
+  @Header('Cache-Control', 'no-store')
+  async listSystemRoles(
+    @Req() request: ConsoleRequest,
+    @Query('membershipId', ParseUUIDPipe) membershipId: string,
+  ) {
+    return this.roles.listSystemRoles(
+      membershipId,
+      await this.authorization.accessTokenFor(request),
+    );
+  }
+
+  @Post('system-role-assignments')
+  @Header('Cache-Control', 'no-store')
+  async createSystemRole(
+    @Req() request: ConsoleRequest,
+    @Body() body: unknown,
+  ) {
+    this.requireJson(request);
+    return this.roles.createSystemRole(
+      body,
+      await this.authorization.accessTokenFor(request),
+    );
+  }
+
+  @Post('system-role-assignments/:id/revoke')
+  @Header('Cache-Control', 'no-store')
+  async revokeSystemRole(
+    @Req() request: ConsoleRequest,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: unknown,
+  ) {
+    this.requireJson(request);
+    return this.roles.revokeSystemRole(
+      id,
+      body,
+      await this.authorization.accessTokenFor(request),
+    );
+  }
+
+  private requireJson(request: ConsoleRequest) {
+    if (!request.is('application/json'))
+      throw new UnsupportedMediaTypeException('JSON request required');
   }
 
   @Get('permissions')
