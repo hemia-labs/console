@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AccessAdminClient } from '../../../integrations/access/access-admin.client';
 import {
+  AssignBillingRoleDto,
   AssignRoleDto,
   CreateRoleDto,
   UpdateRoleDto,
@@ -9,6 +10,29 @@ import {
 @Injectable()
 export class RolesService {
   constructor(private readonly accessAdminClient: AccessAdminClient) {}
+
+  assignBillingRole(
+    dto: AssignBillingRoleDto,
+    accessToken: string,
+  ): Promise<unknown> {
+    return this.accessAdminClient.requestAsUser(
+      {
+        method: 'POST',
+        path: '/v1/system-roles/assignments',
+        body: {
+          membershipId: dto.membershipId,
+          roleId: dto.roleId,
+          scopeType: dto.scopeType,
+          organizationIds:
+            dto.scopeType === 'organizations' ? [dto.organizationId] : [],
+          idempotencyKey: dto.idempotencyKey,
+          validFrom: dto.validFrom,
+          expiresAt: null,
+        },
+      },
+      accessToken,
+    );
+  }
 
   findRoles(accessToken: string): Promise<unknown> {
     return this.accessAdminClient.requestAsUser(
