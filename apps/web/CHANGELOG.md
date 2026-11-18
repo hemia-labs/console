@@ -1,5 +1,11 @@
 # web
 
+## 0.7.1
+
+### Patch Changes
+
+- 715a582: Permite asignar roles de Billing publicados a miembros activos desde Access en Console. Las asignaciones se validan y registran en Hemia Access con la identidad del operador.
+
 ## 0.7.0
 
 ### Minor Changes
