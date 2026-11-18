@@ -1,5 +1,11 @@
 # web
 
+## 0.7.2
+
+### Patch Changes
+
+- 50e7d30: Unifica la consulta, asignación y revocación de roles de Billing y Legal en Console. El formulario usa los roles, permisos y alcances publicados en Access.
+
 ## 0.7.1
 
 ### Patch Changes
