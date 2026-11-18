@@ -7,15 +7,18 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Param,
   ParseUUIDPipe,
   Patch,
   Post,
   Req,
+  UnsupportedMediaTypeException,
   UseGuards,
 } from '@nestjs/common';
 import { SsoCurrentUserAuthGuard } from '../../identity-access/sso-current-user-auth.guard';
 import {
+  AssignBillingRoleDto,
   AssignRoleDto,
   CreateRoleDto,
   UpdateRoleDto,
@@ -33,6 +36,20 @@ export class RolesController {
   @Get('roles')
   async findRoles(@Req() request: ConsoleRequest) {
     return this.roles.findRoles(
+      await this.authorization.accessTokenFor(request),
+    );
+  }
+
+  @Post('billing-role-assignments')
+  @Header('Cache-Control', 'no-store')
+  async assignBillingRole(
+    @Req() request: ConsoleRequest,
+    @Body() dto: AssignBillingRoleDto,
+  ) {
+    if (!request.is('application/json'))
+      throw new UnsupportedMediaTypeException('JSON request required');
+    return this.roles.assignBillingRole(
+      dto,
       await this.authorization.accessTokenFor(request),
     );
   }

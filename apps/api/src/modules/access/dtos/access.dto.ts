@@ -4,6 +4,7 @@ import {
   IsEmail,
   IsIn,
   IsInt,
+  IsISO8601,
   IsUUID,
   Max,
   IsObject,
@@ -12,6 +13,26 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+
+export class AssignBillingRoleDto {
+  @IsUUID()
+  membershipId: string;
+
+  @IsUUID()
+  roleId: string;
+
+  @IsIn(['catalog_global', 'all_customers', 'organizations'])
+  scopeType: 'catalog_global' | 'all_customers' | 'organizations';
+
+  @IsUUID()
+  organizationId: string;
+
+  @IsUUID()
+  idempotencyKey: string;
+
+  @IsISO8601({ strict: true })
+  validFrom: string;
+}
 
 export class ListOrganizationsQueryDto {
   @IsOptional()

@@ -5,6 +5,7 @@ export type SystemRoleCatalog = {
   contractVersion: number;
   publicationStatus: "pending" | "published" | "conflict" | "unavailable";
   roles: {
+    id?: string;
     code: string;
     name: string;
     allowedScopes: { resource: string; consumer: string }[];
@@ -42,6 +43,8 @@ export function readCatalogs(value: unknown): SystemRoleCatalog[] {
         throw new Error("Invalid role response");
       const role = item as Record<string, unknown>;
       if (
+        (role.id !== undefined &&
+          (typeof role.id !== "string" || !role.id)) ||
         typeof role.code !== "string" ||
         !role.code ||
         typeof role.name !== "string" ||
@@ -66,7 +69,12 @@ export function readCatalogs(value: unknown): SystemRoleCatalog[] {
           consumer: scope.consumer,
         });
       }
-      roles.push({ code: role.code, name: role.name, allowedScopes });
+      roles.push({
+        ...(role.id ? { id: role.id } : {}),
+        code: role.code,
+        name: role.name,
+        allowedScopes,
+      });
     }
     const key = `${row.productCode}:${row.version}`;
     if (
