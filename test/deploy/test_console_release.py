@@ -52,4 +52,5 @@ class ReleaseTest(unittest.TestCase):
         compose=json.loads((self.directory/'compose.json').read_text())
         self.assertEqual(compose['services']['api']['env_file'][0]['path'],'/dev/null')
         self.assertNotIn('build',compose['services']['api'])
+        self.assertEqual(compose['services']['api']['environment']['HEMIA_AUTHORIZATION_MODE'],'roles')
         with self.assertRaisesRegex(ValueError,'Tag differs'):release.create(wrong_tag,self.directory,images)

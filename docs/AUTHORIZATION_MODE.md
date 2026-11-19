@@ -1,15 +1,7 @@
-# Modo temporal de acciones sin roles
+# Autorización por roles y permisos
 
-Configurar `HEMIA_AUTHORIZATION_MODE=authenticated` en el backend de Console,
-Access, Legal y Billing y recrear los servicios. Funciona en local y producción.
-La opción predeterminada es `roles`; para restaurar límites cambiar a `roles` y
-recrear los backends. No se asignan roles ni se modifican usuarios automáticamente.
+Console admite únicamente `HEMIA_AUTHORIZATION_MODE=roles` (predeterminado). El antiguo valor `authenticated` se rechaza antes del arranque. Access, Legal y Billing deben desplegarse con autorización por roles y asignaciones explícitas revisadas; una sesión SSO por sí sola no concede funciones administrativas.
 
-Entrar a Console requiere sesión válida de Identity. Sus acciones administrativas
-conservan membresía interna activa, Console habilitado y contexto firmado; solo
-se omite comprobar roles/permisos globales. Las acciones de Access se envían con
-el token del usuario para conservar el ámbito y el actor de auditoría.
+Cada operación de Console requiere membresía activa, producto Console habilitado y contexto firmado vigente vinculado a la identidad, organización y membresía de la sesión. El contexto debe incluir el rol global `platform_super_admin` y el permiso efectivo `*`. Console vuelve a resolver autoridad en cada petición para detectar revocaciones. Un rol de organización o la lectura de un producto no permite administrar la plataforma.
 
-Los catálogos/sistemas globales quedan administrables por esos operadores sin rol;
-las validaciones de datos, estado de negocio y credenciales de servicios continúan.
-La reversión no deshace las operaciones ni cambios de configuración realizados.
+Las acciones de Access usan el token del usuario y conservan su ámbito y auditoría. Las llamadas técnicas conservan las credenciales de servicio y el actor autorizado. No se asignan roles ni se cambian usuarios, datos o políticas de máquinas automáticamente. Revisar y aprovisionar únicamente los roles y alcances necesarios antes del despliegue; no requiere migración de esquema.

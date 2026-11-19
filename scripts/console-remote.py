@@ -31,14 +31,16 @@ try:
     args = ['python3', remote + '/console-deploy.py', '--root', root, '--bundle', remote,
             '--registry', os.environ['REGISTRY_HOST']]
     # Apply the non-secret authorization setting through the dedicated deploy user.
-    # An unset CI variable preserves the existing host configuration.
-    mode = os.environ.get('HEMIA_AUTHORIZATION_MODE', '')
+    # Releases always apply explicit role authorization.
+    mode = os.environ.get('HEMIA_AUTHORIZATION_MODE') or 'roles'
     if mode:
-        if mode not in ('roles', 'authenticated'):
+        if mode != 'roles':
             raise ValueError('Invalid HEMIA_AUTHORIZATION_MODE')
         configure_mode = r"""import os,re,shutil,sys,tempfile
 from pathlib import Path
 from datetime import datetime,timezone
+if sys.argv[2] != 'roles':
+    raise ValueError('Only roles authorization is supported')
 p=Path(sys.argv[1])/'shared/production.env'
 if not p.is_file() or p.stat().st_mode & 0o077:
     raise ValueError('Expected private production.env')

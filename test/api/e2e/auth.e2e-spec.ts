@@ -505,7 +505,7 @@ describe('Console SSO authorization (real SDK and guards)', () => {
     expect(adminCalls).toBe(0);
   });
 
-  it('authenticated mode permits actions without roles but keeps membership and product checks', async () => {
+  it('denies actions without roles even when a legacy mode is injected', async () => {
     app.get(ConfigService).set('authorization.mode', 'authenticated');
     signedClaims.global_roles = [];
     signedClaims.permissions = [];
@@ -517,20 +517,21 @@ describe('Console SSO authorization (real SDK and guards)', () => {
       .post('/identity-access/oauth-clients')
       .set('Cookie', `console_session=${sessionId}`)
       .send(oauthClient)
-      .expect(201);
+      .expect(403);
     await api()
       .post(
         '/access/organizations/403b298c-4c80-4d5e-afb2-6f703238963d/invitations',
       )
       .set('Cookie', `console_session=${sessionId}`)
       .send({ email: 'test@example.test' })
-      .expect(201);
+      .expect(403);
     await api()
       .post(
         '/access/organizations/403b298c-4c80-4d5e-afb2-6f703238963d/invitations',
       )
       .send({ email: 'test@example.test' })
       .expect(401);
+    expect(adminCalls).toBe(0);
     context = { ...accessContext(), organizations: [] };
     await api()
       .post('/identity-access/oauth-clients')
@@ -539,7 +540,7 @@ describe('Console SSO authorization (real SDK and guards)', () => {
       .expect(403);
   });
 
-  it('returning to roles mode restores role enforcement immediately', async () => {
+  it('requires assigned authority on every request regardless of legacy config', async () => {
     const config = app.get(ConfigService);
     config.set('authorization.mode', 'authenticated');
     signedClaims.global_roles = [];
@@ -547,7 +548,7 @@ describe('Console SSO authorization (real SDK and guards)', () => {
     await api()
       .get('/identity-access/users')
       .set('Cookie', `console_session=${sessionId}`)
-      .expect(200);
+      .expect(403);
     config.set('authorization.mode', 'roles');
     await api()
       .get('/identity-access/users')
