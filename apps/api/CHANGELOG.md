@@ -1,5 +1,11 @@
 # api
 
+## 0.7.3
+
+### Patch Changes
+
+- 388b6cf: Enforce platform administrator roles and effective permissions for every Console action; reject the retired authenticated authorization mode before startup.
+
 ## 0.7.2
 
 ### Patch Changes
