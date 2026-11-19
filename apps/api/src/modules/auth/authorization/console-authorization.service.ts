@@ -193,10 +193,8 @@ export class ConsoleAuthorizationService {
         claims.membership_status === 'active' &&
         claims.product_code === 'console' &&
         claims.product_status === 'enabled' &&
-        (this.config.get<string>('authorization.mode', 'roles') ===
-          'authenticated' ||
-          (claims.global_roles.includes('platform_super_admin') &&
-            claims.permissions.includes('*')))
+        claims.global_roles.includes('platform_super_admin') &&
+        claims.permissions.includes('*')
       ) {
         return;
       }

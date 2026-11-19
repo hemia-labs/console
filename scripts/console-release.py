@@ -59,6 +59,7 @@ def create(tag, output, images):
         config.pop('build', None)
         config['image'] = images[service]
     # The controller supplies the actual secret path and bind address on the host.
+    compose['services']['api'].setdefault('environment', {})['HEMIA_AUTHORIZATION_MODE'] = 'roles'
     compose['services']['api']['env_file'] = [{'path': '/dev/null', 'format': 'raw'}]
     (output / 'compose.json').write_text(json.dumps(compose, indent=2) + '\n')
     (output / 'console-deploy.py').write_bytes((root / 'scripts/console-deploy.py').read_bytes())
