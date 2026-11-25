@@ -7,7 +7,7 @@ from pathlib import Path
 import re
 import subprocess
 
-TAG = re.compile(r'console-v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\Z')
+TAG = re.compile(r'console-v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-g[a-f0-9]{40})?\Z')
 DEFAULT_REGISTRY = 'registry.tail41610c.ts.net'
 
 
@@ -25,6 +25,9 @@ def validate(directory, expected_tag=None, registry_host=None):
         raise ValueError('Release does not match requested tag')
     if not re.fullmatch(r'[a-f0-9]{40}', manifest.get('revision', '')):
         raise ValueError('Invalid release commit')
+    expected_commit = manifest.get('revision', '')
+    if '-g' in manifest['tag'] and manifest['tag'].split('-g', 1)[1] != expected_commit:
+        raise ValueError('Deployment tag differs from its commit')
     if manifest.get('registry') != registry:
         raise ValueError('Unexpected release registry')
     if not re.fullmatch(r'https://[a-zA-Z0-9.-]+(?::[0-9]+)?', manifest.get('public_url', '')):
@@ -49,7 +52,7 @@ def create(tag, output, images):
         raise ValueError('Expected console-vMAJOR.MINOR.PATCH')
     root = Path(__file__).resolve().parents[1]
     versions = [json.loads((root / 'apps' / service / 'package.json').read_text())['version'] for service in ['api', 'web']]
-    if versions[0] != versions[1] or tag != 'console-v' + versions[0]:
+    if versions[0] != versions[1] or tag.split('-g', 1)[0] != 'console-v' + versions[0]:
         raise ValueError('Tag differs from the shared package version')
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
