@@ -7,6 +7,9 @@ on:
       release_tag:
         type: string
         required: true
+      commit_bundle:
+        type: string
+        default: ''
       automatic:
         type: boolean
         default: false
@@ -72,6 +75,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Download and verify the published release
+        if: inputs.commit_bundle == ''
         run: |
           set -euo pipefail
           python3 - <<'PYCODE'
@@ -92,6 +96,23 @@ jobs:
           comparison=json.loads(subprocess.check_output(['gh','api',f"repos/{os.environ['GITHUB_REPOSITORY']}/compare/{manifest['revision']}...main"]))
           assert comparison['status'] in ['ahead','identical'],'Release commit is not on main'
           PYCODE
+      - name: Download the commit deployment bundle
+        if: inputs.commit_bundle != ''
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: ${{ inputs.commit_bundle }}
+          path: ${{ runner.temp }}/console-release
+      - name: Verify the bundle belongs to this main commit
+        if: inputs.commit_bundle != ''
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = push
+          test "$GITHUB_REF" = refs/heads/main
+          test "${RELEASE_TAG##*-g}" = "$GITHUB_SHA"
+          python3 scripts/console-release.py validate "$RELEASE_TAG" "$RUNNER_TEMP/console-release"
+          jq -e --arg sha "$GITHUB_SHA" '.revision == $sha' "$RUNNER_TEMP/console-release/release.json" >/dev/null
+          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')" = "$GITHUB_SHA" ||
+            { echo 'Retry from the current main commit to avoid deploying an older build.' >&2; exit 1; }
       - uses: tailscale/github-action@99a8333667fff04fdd6cffb46dfd409f8329a7bf # v4
         with:
           oauth-client-id: ${{ vars.TS_CLIENT_ID }}
